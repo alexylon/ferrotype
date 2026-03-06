@@ -1,6 +1,7 @@
 mod app;
 mod input;
 mod keyboard;
+mod lessons;
 mod ui;
 
 use std::io::{stdout, Result};
@@ -36,6 +37,13 @@ async fn run_app() -> Result<()> {
     let rows = build_keyboard_rows();
     let grid_map = build_keycode_grid_map(&rows);
     let mut app = App::new();
+
+    if let Some(path) = std::env::args().nth(1) {
+        match app::Document::load(&path) {
+            Ok(doc) => app.document = Some(doc),
+            Err(e) => app.error = Some(e),
+        }
+    }
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
     tokio::spawn(run_input_loop(tx));

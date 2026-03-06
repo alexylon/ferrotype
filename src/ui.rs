@@ -172,7 +172,12 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
         return;
     }
 
-    let [inner] = Layout::vertical([Constraint::Length(6)])
+    let panel_height = if app.document.is_none() && app.error.is_none() {
+        (crate::lessons::LESSONS.len() as u16) + 4
+    } else {
+        6
+    };
+    let [inner] = Layout::vertical([Constraint::Length(panel_height)])
         .flex(Flex::Center)
         .areas(area);
 
@@ -195,15 +200,20 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
 
     match &app.document {
         None => {
+            let mut lines = vec![Line::from(vec![
+                Span::styled("Ctrl-F", Style::new().fg(ACCENT).bold()),
+                Span::styled(" open a file  ", Style::new().fg(DIM_TEXT)),
+                Span::styled("Esc", Style::new().fg(ACCENT).bold()),
+                Span::styled(" quit", Style::new().fg(DIM_TEXT)),
+            ])];
+            for (i, lesson) in crate::lessons::LESSONS.iter().enumerate() {
+                lines.push(Line::from(vec![
+                    Span::styled(format!("  {}", i + 1), Style::new().fg(ACCENT).bold()),
+                    Span::styled(format!("  {}", lesson.label), Style::new().fg(DIM_TEXT)),
+                ]));
+            }
             frame.render_widget(
-                Paragraph::new(Line::from(vec![
-                    Span::styled("Ctrl-F", Style::new().fg(ACCENT).bold()),
-                    Span::styled(" to open a file  ", Style::new().fg(DIM_TEXT)),
-                    Span::styled("Esc", Style::new().fg(ACCENT).bold()),
-                    Span::styled(" to quit", Style::new().fg(DIM_TEXT)),
-                ]))
-                .block(block)
-                .centered(),
+                Paragraph::new(lines).block(block).centered(),
                 inner,
             );
         }

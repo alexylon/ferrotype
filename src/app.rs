@@ -22,6 +22,25 @@ pub struct Document {
 }
 
 impl Document {
+    pub fn from_text(text: &str) -> Result<Self, String> {
+        let lines: Vec<String> = text.lines().map(String::from).collect();
+        if lines.is_empty() {
+            return Err("Text is empty".into());
+        }
+        let first_line = lines
+            .iter()
+            .find(|l| !l.is_empty())
+            .cloned()
+            .unwrap_or_default();
+        Ok(Self {
+            lines,
+            line_idx: 0,
+            char_idx: 0,
+            current_line: first_line,
+            progress: Progress::Active,
+        })
+    }
+
     pub fn load(raw_path: &str) -> Result<Self, String> {
         let trimmed = raw_path.trim();
         let resolved = if Path::new(trimmed).is_absolute() {
@@ -39,25 +58,7 @@ impl Document {
         let content =
             fs::read_to_string(&resolved).map_err(|e| format!("Cannot read file: {e}"))?;
 
-        let lines: Vec<String> = content.lines().map(String::from).collect();
-
-        if lines.is_empty() {
-            return Err("File is empty".into());
-        }
-
-        let first_line = lines
-            .iter()
-            .find(|l| !l.is_empty())
-            .cloned()
-            .unwrap_or_default();
-
-        Ok(Self {
-            lines,
-            line_idx: 0,
-            char_idx: 0,
-            current_line: first_line,
-            progress: Progress::Active,
-        })
+        Self::from_text(&content)
     }
 
     pub fn cursor_position(&self) -> usize {
@@ -231,6 +232,9 @@ impl App {
             }
 
             Mode::Typing => match action.key.code {
+                KeyCode::Char(typed) if self.document.is_none() => {
+                    self.try_select_lesson(typed);
+                }
                 KeyCode::Char(typed) if self.last_error_char.is_none() => {
                     self.handle_typed_char(typed);
                 }
@@ -247,6 +251,26 @@ impl App {
             },
         }
         false
+    }
+
+    fn try_select_lesson(&mut self, ch: char) {
+        let idx = match ch.to_digit(10) {
+            Some(d) if d >= 1 => (d - 1) as usize,
+            _ => return,
+        };
+        if let Some(lesson) = crate::lessons::LESSONS.get(idx) {
+            match Document::from_text(lesson.text) {
+                Ok(doc) => {
+                    self.document = Some(doc);
+                    self.error = None;
+                    self.correct_count = 0;
+                    self.total_count = 0;
+                    self.start_time = None;
+                    self.end_time = None;
+                }
+                Err(e) => self.error = Some(e),
+            }
+        }
     }
 
     fn handle_typed_char(&mut self, typed: char) {
