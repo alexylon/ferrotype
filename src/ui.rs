@@ -172,7 +172,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
         return;
     }
 
-    let [inner] = Layout::vertical([Constraint::Length(3)])
+    let [inner] = Layout::vertical([Constraint::Length(6)])
         .flex(Flex::Center)
         .areas(area);
 
@@ -180,7 +180,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::new().fg(DIM_BORDER))
-        .padding(Padding::horizontal(2));
+        .padding(Padding::new(2, 2, 1, 0));
 
     if let Some(ref err) = app.error {
         frame.render_widget(
@@ -257,8 +257,13 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
                 }
             }
 
+            let mut lines = vec![Line::from(spans)];
+            for upcoming in doc.upcoming_lines(2) {
+                lines.push(Line::from(Span::styled(upcoming, Style::new().fg(DIM_TEXT))));
+            }
+
             frame.render_widget(
-                Paragraph::new(Line::from(spans)).block(block).centered(),
+                Paragraph::new(lines).block(block).centered(),
                 inner,
             );
         }

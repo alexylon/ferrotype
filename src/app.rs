@@ -68,6 +68,20 @@ impl Document {
         self.current_line.chars().nth(self.char_idx)
     }
 
+    pub fn upcoming_lines(&self, count: usize) -> Vec<&str> {
+        let mut result = Vec::new();
+        let mut idx = self.line_idx + 1;
+        while result.len() < count {
+            match self.lines.get(idx) {
+                Some(line) if !line.is_empty() => result.push(line.as_str()),
+                Some(_) => {}
+                None => break,
+            }
+            idx += 1;
+        }
+        result
+    }
+
     pub fn advance(&mut self) {
         self.char_idx += 1;
 
