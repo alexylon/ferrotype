@@ -227,26 +227,41 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
             } else {
                 0.0
             };
-            frame.render_widget(
-                Paragraph::new(Line::from(vec![
-                    Span::styled("Done! ", Style::new().fg(CORRECT).bold()),
-                    Span::styled(
-                        format!("{:.0} wpm", app.wpm()),
-                        Style::new().fg(ACCENT).bold(),
-                    ),
-                    Span::styled(
-                        format!("  {:.0}% accuracy", pct),
-                        Style::new().fg(Color::White),
-                    ),
-                    Span::styled(
-                        format!("  ({}/{})", app.correct_count, app.total_count),
+            let mut lines = vec![Line::from(vec![
+                Span::styled("Done! ", Style::new().fg(CORRECT).bold()),
+                Span::styled(
+                    format!("{:.0} wpm", app.wpm()),
+                    Style::new().fg(ACCENT).bold(),
+                ),
+                Span::styled(
+                    format!("  {:.0}% accuracy", pct),
+                    Style::new().fg(Color::White),
+                ),
+                Span::styled(
+                    format!("  ({}/{})", app.correct_count, app.total_count),
+                    Style::new().fg(DIM_TEXT),
+                ),
+                Span::styled("  Ctrl-F", Style::new().fg(ACCENT)),
+                Span::styled(" new file", Style::new().fg(DIM_TEXT)),
+            ])];
+            let worst = app.worst_keys(5);
+            if !worst.is_empty() {
+                let mut spans = vec![Span::styled("Weakest: ", Style::new().fg(DIM_TEXT))];
+                for (i, (ch, acc)) in worst.iter().enumerate() {
+                    if i > 0 {
+                        spans.push(Span::styled("  ", Style::new().fg(DIM_TEXT)));
+                    }
+                    let label = if *ch == ' ' { "space".to_string() } else { ch.to_string() };
+                    spans.push(Span::styled(label, Style::new().fg(INCORRECT).bold()));
+                    spans.push(Span::styled(
+                        format!(" {acc:.0}%"),
                         Style::new().fg(DIM_TEXT),
-                    ),
-                    Span::styled("  Ctrl-F", Style::new().fg(ACCENT)),
-                    Span::styled(" new file", Style::new().fg(DIM_TEXT)),
-                ]))
-                .block(block)
-                .centered(),
+                    ));
+                }
+                lines.push(Line::from(spans));
+            }
+            frame.render_widget(
+                Paragraph::new(lines).block(block).centered(),
                 inner,
             );
         }

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
@@ -138,6 +139,7 @@ pub struct App {
     pub highlight_until: Option<Instant>,
     pub start_time: Option<Instant>,
     pub end_time: Option<Instant>,
+    pub key_stats: HashMap<char, (u32, u32)>,
 }
 
 impl App {
@@ -155,6 +157,7 @@ impl App {
             highlight_until: None,
             start_time: None,
             end_time: None,
+            key_stats: HashMap::new(),
         }
     }
 
@@ -179,6 +182,21 @@ impl App {
             }
             None => 0.0,
         }
+    }
+
+    pub fn worst_keys(&self, count: usize) -> Vec<(char, f32)> {
+        let mut keys: Vec<(char, f32)> = self
+            .key_stats
+            .iter()
+            .filter(|(_, (hits, misses))| *misses > 0 && (*hits + *misses) >= 2)
+            .map(|(&ch, (hits, misses))| {
+                let accuracy = *hits as f32 / (*hits + *misses) as f32 * 100.0;
+                (ch, accuracy)
+            })
+            .collect();
+        keys.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        keys.truncate(count);
+        keys
     }
 
     pub fn handle_event(&mut self, event: InputEvent) -> bool {
@@ -231,6 +249,7 @@ impl App {
                         self.total_count = 0;
                         self.start_time = None;
                         self.end_time = None;
+                        self.key_stats.clear();
                     }
                     Err(e) => self.error = Some(e),
                 }
@@ -277,6 +296,7 @@ impl App {
                     self.total_count = 0;
                     self.start_time = None;
                     self.end_time = None;
+                    self.key_stats.clear();
                 }
                 Err(e) => self.error = Some(e),
             }
@@ -294,8 +314,10 @@ impl App {
         }
 
         self.total_count += 1;
+        let entry = self.key_stats.entry(expected).or_insert((0, 0));
 
         if typed == expected {
+            entry.0 += 1;
             self.correct_count += 1;
             self.last_correct = true;
             self.last_error_char = None;
@@ -306,6 +328,7 @@ impl App {
                 }
             }
         } else {
+            entry.1 += 1;
             self.last_correct = false;
             self.last_error_char = Some(typed);
         }
