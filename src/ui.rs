@@ -98,9 +98,9 @@ pub fn draw(
 
 fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
     let [left, center, right] = Layout::horizontal([
-        Constraint::Length(20),
+        Constraint::Percentage(30),
         Constraint::Min(0),
-        Constraint::Length(20),
+        Constraint::Percentage(30),
     ])
     .areas(area);
 
@@ -111,12 +111,20 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
         area,
     );
 
+    let elapsed = app.elapsed_secs();
+    let mins = (elapsed as u64) / 60;
+    let secs = (elapsed as u64) % 60;
+
     frame.render_widget(
         Paragraph::new(Line::from(vec![
             Span::styled(" ✓ ", Style::new().fg(CORRECT).bold()),
             Span::styled(
                 format!("{}", app.correct_count),
                 Style::new().fg(Color::White),
+            ),
+            Span::styled(
+                format!("  {mins}:{secs:02}"),
+                Style::new().fg(DIM_TEXT),
             ),
         ])),
         left,
@@ -131,8 +139,13 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
         center,
     );
 
+    let wpm = app.wpm();
     frame.render_widget(
         Paragraph::new(Line::from(vec![
+            Span::styled(
+                format!("{wpm:.0} wpm  "),
+                Style::new().fg(if wpm > 0.0 { ACCENT } else { DIM_TEXT }),
+            ),
             Span::styled(
                 format!("{}", app.total_count),
                 Style::new().fg(Color::White),
@@ -194,7 +207,11 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
                 Paragraph::new(Line::from(vec![
                     Span::styled("Done! ", Style::new().fg(CORRECT).bold()),
                     Span::styled(
-                        format!("{:.0}% accuracy", pct),
+                        format!("{:.0} wpm", app.wpm()),
+                        Style::new().fg(ACCENT).bold(),
+                    ),
+                    Span::styled(
+                        format!("  {:.0}% accuracy", pct),
                         Style::new().fg(Color::White),
                     ),
                     Span::styled(
@@ -202,7 +219,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
                         Style::new().fg(DIM_TEXT),
                     ),
                     Span::styled("  Ctrl-F", Style::new().fg(ACCENT)),
-                    Span::styled(" for another file", Style::new().fg(DIM_TEXT)),
+                    Span::styled(" new file", Style::new().fg(DIM_TEXT)),
                 ]))
                 .block(block)
                 .centered(),
@@ -311,7 +328,7 @@ fn draw_key_highlight(
     kbd_rects: &[Rc<[Rect]>],
     grid_map: &HashMap<KeyCode, GridCoord>,
 ) {
-    if !app.show_highlight {
+    if app.highlighted_key.is_none() {
         return;
     }
 

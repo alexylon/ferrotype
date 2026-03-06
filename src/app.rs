@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::time::Instant;
 
 use crossterm::event::KeyCode;
 
@@ -100,7 +101,9 @@ pub struct App {
     pub total_count: u32,
     pub last_correct: bool,
     pub highlighted_key: Option<KeyCode>,
-    pub show_highlight: bool,
+    pub highlight_until: Option<Instant>,
+    pub start_time: Option<Instant>,
+    pub end_time: Option<Instant>,
 }
 
 impl App {
@@ -114,15 +117,44 @@ impl App {
             total_count: 0,
             last_correct: false,
             highlighted_key: None,
-            show_highlight: false,
+            highlight_until: None,
+            start_time: None,
+            end_time: None,
+        }
+    }
+
+    pub fn wpm(&self) -> f64 {
+        let start = match self.start_time {
+            Some(t) => t,
+            None => return 0.0,
+        };
+        let end = self.end_time.unwrap_or_else(Instant::now);
+        let secs = end.duration_since(start).as_secs_f64();
+        if secs < 1.0 {
+            return 0.0;
+        }
+        (self.correct_count as f64 / 5.0) / (secs / 60.0)
+    }
+
+    pub fn elapsed_secs(&self) -> f64 {
+        match self.start_time {
+            Some(t) => {
+                let end = self.end_time.unwrap_or_else(Instant::now);
+                end.duration_since(t).as_secs_f64()
+            }
+            None => 0.0,
         }
     }
 
     pub fn handle_event(&mut self, event: InputEvent) -> bool {
         match event {
             InputEvent::Tick => {
-                self.show_highlight = false;
-                self.highlighted_key = None;
+                if let Some(until) = self.highlight_until {
+                    if Instant::now() >= until {
+                        self.highlighted_key = None;
+                        self.highlight_until = None;
+                    }
+                }
                 false
             }
             InputEvent::Press(action) => self.handle_action(action),
@@ -162,6 +194,8 @@ impl App {
                         self.error = None;
                         self.correct_count = 0;
                         self.total_count = 0;
+                        self.start_time = None;
+                        self.end_time = None;
                     }
                     Err(e) => self.error = Some(e),
                 }
@@ -187,23 +221,26 @@ impl App {
             None => return,
         };
 
+        if self.start_time.is_none() {
+            self.start_time = Some(Instant::now());
+        }
+
         self.total_count += 1;
 
-        let is_match = typed == expected
-            || (expected.is_lowercase() && typed == expected)
-            || (expected.is_uppercase() && typed == expected);
-
-        if is_match {
+        if typed == expected {
             self.correct_count += 1;
             self.last_correct = true;
             if let Some(doc) = self.document.as_mut() {
                 doc.advance();
+                if doc.progress == Progress::Finished {
+                    self.end_time = Some(Instant::now());
+                }
             }
         } else {
             self.last_correct = false;
         }
 
-        self.show_highlight = true;
+        self.highlight_until = Some(Instant::now() + std::time::Duration::from_millis(400));
         let display_char = if typed.is_whitespace() {
             ' '
         } else {

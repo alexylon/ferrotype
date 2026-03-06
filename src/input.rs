@@ -31,7 +31,7 @@ pub async fn run_input_loop(tx: mpsc::UnboundedSender<InputEvent>) {
     loop {
         let event = tokio::select! {
             maybe = stream.next() => maybe,
-            _ = tokio::time::sleep(std::time::Duration::from_millis(600)) => {
+            _ = tokio::time::sleep(std::time::Duration::from_millis(200)) => {
                 let _ = tx.send(InputEvent::Tick);
                 continue;
             }
