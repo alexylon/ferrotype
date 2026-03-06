@@ -83,6 +83,16 @@ impl Document {
         result
     }
 
+    pub fn line_progress(&self) -> (usize, usize) {
+        let total = self.lines.iter().filter(|l| !l.is_empty()).count();
+        let current = self.lines[..self.line_idx]
+            .iter()
+            .filter(|l| !l.is_empty())
+            .count()
+            + 1;
+        (current, total)
+    }
+
     pub fn advance(&mut self) {
         self.char_idx += 1;
 

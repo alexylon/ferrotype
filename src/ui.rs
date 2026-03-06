@@ -140,12 +140,16 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
         left,
     );
 
+    let mut center_spans = vec![Span::styled("ferrotype", Style::new().fg(ACCENT).bold())];
+    if let Some(doc) = &app.document {
+        let (cur, total) = doc.line_progress();
+        center_spans.push(Span::styled(
+            format!("  {cur}/{total}"),
+            Style::new().fg(DIM_TEXT),
+        ));
+    }
     frame.render_widget(
-        Paragraph::new(Line::from(vec![Span::styled(
-            "ferrotype",
-            Style::new().fg(ACCENT).bold(),
-        )]))
-        .centered(),
+        Paragraph::new(Line::from(center_spans)).centered(),
         center,
     );
 
