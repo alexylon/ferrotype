@@ -286,7 +286,7 @@ impl App {
                 (ch, accuracy)
             })
             .collect();
-        keys.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        keys.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
         keys.truncate(count);
         keys
     }
