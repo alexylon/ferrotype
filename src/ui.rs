@@ -173,6 +173,16 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
                 Style::new().fg(Color::White),
             ),
             Span::styled(format!("  {mins}:{secs:02}"), Style::new().fg(DIM_TEXT)),
+            if app.document.is_some() {
+                Span::styled("  Esc", Style::new().fg(ACCENT).bold())
+            } else {
+                Span::raw("")
+            },
+            if app.document.is_some() {
+                Span::styled(" menu", Style::new().fg(DIM_TEXT))
+            } else {
+                Span::raw("")
+            },
         ])),
         left,
     );
@@ -211,7 +221,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
     }
 
     let panel_height = if app.document.is_none() && app.error.is_none() {
-        (crate::lessons::LESSONS.len() as u16) + 5
+        (crate::lessons::LESSONS.len() as u16) + 8
     } else {
         6
     };
@@ -238,22 +248,21 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
 
     match &app.document {
         None => {
-            let mut lines = vec![Line::from(vec![
-                Span::styled("Ctrl-F", Style::new().fg(ACCENT).bold()),
-                Span::styled(" open a file  ", Style::new().fg(DIM_TEXT)),
-                Span::styled("Esc", Style::new().fg(ACCENT).bold()),
-                Span::styled(" quit", Style::new().fg(DIM_TEXT)),
-            ])];
+            let menu_item = |key: &str, label: &str, dim: bool| {
+                let label_fg = if dim { DIM_TEXT } else { Color::Gray };
+                Line::from(vec![
+                    Span::styled(format!("{key:>4}"), Style::new().fg(ACCENT).bold()),
+                    Span::styled(format!("  {label:<20}"), Style::new().fg(label_fg)),
+                ])
+            };
+            let mut lines: Vec<Line> = Vec::new();
             for (i, lesson) in crate::lessons::LESSONS.iter().enumerate() {
-                lines.push(Line::from(vec![
-                    Span::styled(format!("  {}", i + 1), Style::new().fg(ACCENT).bold()),
-                    Span::styled(format!("  {}", lesson.label), Style::new().fg(DIM_TEXT)),
-                ]));
+                lines.push(menu_item(&format!("{}", i + 1), lesson.label, false));
             }
-            lines.push(Line::from(vec![
-                Span::styled("  h", Style::new().fg(ACCENT).bold()),
-                Span::styled("  History", Style::new().fg(DIM_TEXT)),
-            ]));
+            lines.push(Line::from(""));
+            lines.push(menu_item("h", "History", true));
+            lines.push(menu_item("^F", "Open file", true));
+            lines.push(menu_item("Esc", "Quit", true));
             frame.render_widget(Paragraph::new(lines).block(block).centered(), inner);
         }
         Some(doc) if doc.progress == Progress::Finished => {
