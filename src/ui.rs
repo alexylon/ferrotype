@@ -234,12 +234,24 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(Paragraph::new(Line::from(center_spans)).centered(), center);
 
     let wpm = app.wpm();
+    let acc_pct = if app.total_count > 0 {
+        app.correct_count as f64 / app.total_count as f64 * 100.0
+    } else {
+        0.0
+    };
+    let has_stats = app.total_count > 0;
     frame.render_widget(
         Paragraph::new(Line::from(vec![
             Span::styled(
-                format!("{wpm:.0} wpm  "),
+                format!("{acc_pct:.0}%"),
+                Style::new().fg(if has_stats { CORRECT } else { DIM_TEXT }),
+            ),
+            Span::styled("  ", Style::new().fg(DIM_TEXT)),
+            Span::styled(
+                format!("{wpm:.0} wpm"),
                 Style::new().fg(if wpm > 0.0 { ACCENT } else { DIM_TEXT }),
             ),
+            Span::styled("  ", Style::new().fg(DIM_TEXT)),
             Span::styled(
                 format!("{}", app.total_count),
                 Style::new().fg(Color::White),
@@ -500,7 +512,10 @@ fn draw_history(frame: &mut Frame, app: &App, area: Rect) {
         )));
     } else {
         lines.push(Line::from(Span::styled(
-            format!("{:<18} {:>5}  {:>5}  {:>6}", "date", "wpm", "acc", "time"),
+            format!(
+                "{:<18} {:>5}  {:>5}  {:>6}  {}",
+                "date", "wpm", "acc", "time", "lesson"
+            ),
             Style::new().fg(DIM_TEXT),
         )));
 
@@ -509,10 +524,15 @@ fn draw_history(frame: &mut Frame, app: &App, area: Rect) {
             let mins = (r.duration_secs as u64) / 60;
             let secs = (r.duration_secs as u64) % 60;
             let status = if r.completed { "" } else { "*" };
+            let lesson_display = if r.lesson.is_empty() {
+                "—"
+            } else {
+                &r.lesson
+            };
             lines.push(Line::from(Span::styled(
                 format!(
-                    "{:<18} {:>5.0}  {:>4.0}%  {:>2}:{:02}{}",
-                    display_ts, r.wpm, r.accuracy, mins, secs, status
+                    "{:<18} {:>5.0}  {:>4.0}%  {:>2}:{:02}{}  {}",
+                    display_ts, r.wpm, r.accuracy, mins, secs, status, lesson_display
                 ),
                 Style::new().fg(Color::White),
             )));

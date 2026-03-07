@@ -161,6 +161,7 @@ pub struct App {
     pub viewing_history: bool,
     pub history: Vec<crate::history::SessionRecord>,
     pub selected_lesson: usize,
+    pub lesson_name: String,
 }
 
 impl App {
@@ -182,6 +183,7 @@ impl App {
             viewing_history: false,
             history: Vec::new(),
             selected_lesson: 0,
+            lesson_name: String::new(),
         }
     }
 
@@ -226,6 +228,7 @@ impl App {
             total: self.total_count,
             duration_secs: elapsed,
             completed,
+            lesson: self.lesson_name.clone(),
         });
     }
 
@@ -248,6 +251,12 @@ impl App {
         self.document
             .as_ref()
             .is_some_and(|d| d.progress == Progress::Finished)
+    }
+
+    pub fn save_on_exit(&self) {
+        if self.document.is_some() && !self.is_finished() {
+            self.save_history(false);
+        }
     }
 
     fn restart(&mut self) {
@@ -293,6 +302,7 @@ impl App {
                             self.start_time = None;
                             self.end_time = None;
                             self.key_stats.clear();
+                            self.lesson_name = path.rsplit('/').next().unwrap_or(&path).to_string();
                         }
                         Err(e) => self.error = Some(e),
                     }
@@ -384,6 +394,7 @@ impl App {
                             self.start_time = None;
                             self.end_time = None;
                             self.key_stats.clear();
+                            self.lesson_name = lesson.label.to_string();
                         }
                         Err(e) => self.error = Some(e),
                     }

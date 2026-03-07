@@ -12,6 +12,8 @@ pub struct SessionRecord {
     pub duration_secs: f64,
     #[serde(default)]
     pub completed: bool,
+    #[serde(default)]
+    pub lesson: String,
 }
 
 fn history_path() -> PathBuf {

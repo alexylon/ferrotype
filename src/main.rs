@@ -48,7 +48,10 @@ async fn run_app() -> Result<()> {
 
     if let Some(path) = std::env::args().nth(1) {
         match app::Document::load(&path) {
-            Ok(doc) => app.document = Some(doc),
+            Ok(doc) => {
+                app.document = Some(doc);
+                app.lesson_name = path.rsplit('/').next().unwrap_or(&path).to_string();
+            }
             Err(e) => app.error = Some(e),
         }
     }
@@ -56,13 +59,26 @@ async fn run_app() -> Result<()> {
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
     tokio::spawn(run_input_loop(tx));
 
+    let mut sigterm =
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).ok();
+    let mut sighup = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup()).ok();
+
     terminal.draw(|frame| {
         let regions = compute_regions(frame.area());
         draw(frame, &app, &regions, &rows, &grid_map);
     })?;
 
     loop {
-        let Some(event) = rx.recv().await else { break };
+        let event = tokio::select! {
+            ev = rx.recv() => ev,
+            _ = async { sigterm.as_mut().unwrap().recv().await }, if sigterm.is_some() => None,
+            _ = async { sighup.as_mut().unwrap().recv().await }, if sighup.is_some() => None,
+        };
+
+        let Some(event) = event else {
+            app.save_on_exit();
+            break;
+        };
 
         if app.handle_event(event) {
             break;
