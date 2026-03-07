@@ -12,14 +12,80 @@ fn chrono_now() -> String {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
-    let days = secs / 86400;
-    let time = secs % 86400;
+    let local_secs = utc_to_local(secs as i64) as u64;
+    let days = local_secs / 86400;
+    let time = local_secs % 86400;
     let h = time / 3600;
     let m = (time % 3600) / 60;
     let s = time % 60;
     // days since 1970-01-01
     let (y, mo, d) = days_to_ymd(days);
-    format!("{y:04}-{mo:02}-{d:02}T{h:02}:{m:02}:{s:02}Z")
+    format!("{y:04}-{mo:02}-{d:02}T{h:02}:{m:02}:{s:02}")
+}
+
+#[cfg(unix)]
+fn utc_to_local(epoch: i64) -> i64 {
+    use std::mem::MaybeUninit;
+    extern "C" {
+        fn localtime_r(timep: *const i64, result: *mut Tm) -> *mut Tm;
+    }
+    #[repr(C)]
+    struct Tm {
+        tm_sec: i32,
+        tm_min: i32,
+        tm_hour: i32,
+        tm_mday: i32,
+        tm_mon: i32,
+        tm_year: i32,
+        tm_wday: i32,
+        tm_yday: i32,
+        tm_isdst: i32,
+        tm_gmtoff: i64,
+        _tm_zone: *const i8,
+    }
+    let mut tm = MaybeUninit::<Tm>::uninit();
+    unsafe {
+        let ptr = localtime_r(&epoch, tm.as_mut_ptr());
+        if ptr.is_null() {
+            return epoch;
+        }
+        epoch + (*ptr).tm_gmtoff
+    }
+}
+
+#[cfg(windows)]
+fn utc_to_local(epoch: i64) -> i64 {
+    // Windows: use _localtime64_s to get local broken-down time,
+    // then compute offset by diffing against UTC components.
+    // Fallback: just return UTC.
+    extern "C" {
+        fn _localtime64_s(result: *mut CTm, timep: *const i64) -> i32;
+        fn _gmtime64_s(result: *mut CTm, timep: *const i64) -> i32;
+    }
+    #[repr(C)]
+    #[derive(Default)]
+    struct CTm {
+        tm_sec: i32,
+        tm_min: i32,
+        tm_hour: i32,
+        tm_mday: i32,
+        tm_mon: i32,
+        tm_year: i32,
+        tm_wday: i32,
+        tm_yday: i32,
+        tm_isdst: i32,
+    }
+    let mut local = CTm::default();
+    let mut utc = CTm::default();
+    unsafe {
+        if _localtime64_s(&mut local, &epoch) != 0 || _gmtime64_s(&mut utc, &epoch) != 0 {
+            return epoch;
+        }
+    }
+    let local_mins = (local.tm_yday * 24 + local.tm_hour) * 60 + local.tm_min;
+    let utc_mins = (utc.tm_yday * 24 + utc.tm_hour) * 60 + utc.tm_min;
+    let offset_secs = (local_mins - utc_mins) as i64 * 60;
+    epoch + offset_secs
 }
 
 fn days_to_ymd(mut days: u64) -> (u64, u64, u64) {

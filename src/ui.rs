@@ -378,6 +378,23 @@ fn draw_search_overlay(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(Paragraph::new(cursor_line).block(block), inner);
 }
 
+/// Turn "2026-03-06T22:01:05" into "Mar 06  22:01"
+fn friendly_timestamp(ts: &str) -> String {
+    const MONTHS: [&str; 12] = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    // Expected format: YYYY-MM-DDThh:mm:ss
+    if ts.len() >= 16 {
+        let mo: usize = ts[5..7].parse().unwrap_or(1);
+        let day = &ts[8..10];
+        let time = &ts[11..16]; // hh:mm
+        let month = MONTHS.get(mo.wrapping_sub(1)).unwrap_or(&"???");
+        format!("{month} {day}  {time}")
+    } else {
+        ts.to_string()
+    }
+}
+
 fn draw_history(frame: &mut Frame, app: &App, area: Rect) {
     let records = &app.history;
     let show_count = 10;
@@ -409,11 +426,7 @@ fn draw_history(frame: &mut Frame, app: &App, area: Rect) {
         )));
 
         for r in &recent {
-            let display_ts = if r.timestamp.len() >= 16 {
-                &r.timestamp[..16]
-            } else {
-                &r.timestamp
-            };
+            let display_ts = friendly_timestamp(&r.timestamp);
             let mins = (r.duration_secs as u64) / 60;
             let secs = (r.duration_secs as u64) % 60;
             let status = if r.completed { "" } else { "*" };
