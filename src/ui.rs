@@ -168,8 +168,19 @@ pub fn draw(
         draw_text_panel(frame, app, regions.text_area);
         draw_search_overlay(frame, app, regions.search_area);
     }
-    draw_keyboard(frame, rows, &kbd_rects, &hint_coords);
-    draw_key_highlight(frame, app, &kbd_rects, grid_map);
+    let highlight_coord: Option<GridCoord> = app
+        .highlighted_key
+        .and_then(|code| grid_map.get(&code))
+        .copied();
+    let highlight_color = if app.last_correct { CORRECT } else { INCORRECT };
+    draw_keyboard(
+        frame,
+        rows,
+        &kbd_rects,
+        &hint_coords,
+        highlight_coord,
+        highlight_color,
+    );
 }
 
 fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
@@ -512,6 +523,8 @@ fn draw_keyboard(
     rows: &[Vec<KeyDef>],
     kbd_rects: &[Rc<[Rect]>],
     hint_coords: &[GridCoord],
+    highlight_coord: Option<GridCoord>,
+    highlight_color: Color,
 ) {
     for (row_idx, row) in rows.iter().enumerate() {
         let Some(row_rects) = kbd_rects.get(row_idx) else {
@@ -524,17 +537,19 @@ fn draw_keyboard(
             };
 
             let is_hint = hint_coords.contains(&(row_idx, col_idx));
+            let is_highlight = highlight_coord == Some((row_idx, col_idx));
 
-            let border_color = if is_hint { ACCENT } else { DIM_BORDER };
+            let border_color = if is_highlight {
+                highlight_color
+            } else if is_hint {
+                CORRECT
+            } else {
+                DIM_BORDER
+            };
             let block = Block::new()
                 .borders(Borders::ALL)
                 .border_type(BorderType::Rounded)
-                .border_style(Style::new().fg(border_color))
-                .style(if is_hint {
-                    Style::new().bg(HINT)
-                } else {
-                    Style::new()
-                });
+                .border_style(Style::new().fg(border_color));
 
             let inner = block.inner(cell);
             frame.render_widget(block, cell);
@@ -549,60 +564,34 @@ fn draw_keyboard(
             let label_w = label.chars().count() as u16;
             let cx = inner.x + inner.width.saturating_sub(label_w) / 2;
 
+            let label_fg = if is_highlight {
+                Color::Black
+            } else if is_hint {
+                CORRECT
+            } else {
+                Color::Gray
+            };
+            let sec_fg = if is_highlight { Color::Black } else { DIM_TEXT };
+
             if let Some(sec_char) = has_secondary {
                 // Two-label key: secondary at top, primary at bottom half
                 let cy = inner.y + inner.height.saturating_sub(1);
                 if cx < inner.x + inner.width && cy < inner.y + inner.height {
-                    buf.set_string(cx, cy, label, Style::new().fg(Color::Gray));
+                    buf.set_string(cx, cy, label, Style::new().fg(label_fg));
                 }
                 let s = sec_char.to_string();
                 let sw = s.chars().count() as u16;
                 let sx = inner.x + inner.width.saturating_sub(sw) / 2;
                 if sx < inner.x + inner.width && inner.y < cy {
-                    buf.set_string(sx, inner.y, &s, Style::new().fg(DIM_TEXT));
+                    buf.set_string(sx, inner.y, &s, Style::new().fg(sec_fg));
                 }
             } else {
                 // Single-label key
                 let cy = inner.y + inner.height / 2;
                 if cx < inner.x + inner.width && cy < inner.y + inner.height {
-                    buf.set_string(cx, cy, label, Style::new().fg(Color::Gray));
+                    buf.set_string(cx, cy, label, Style::new().fg(label_fg));
                 }
             }
         }
     }
-}
-
-fn draw_key_highlight(
-    frame: &mut Frame,
-    app: &App,
-    kbd_rects: &[Rc<[Rect]>],
-    grid_map: &HashMap<KeyCode, GridCoord>,
-) {
-    if app.highlighted_key.is_none() {
-        return;
-    }
-
-    let code = match app.highlighted_key {
-        Some(c) => c,
-        None => return,
-    };
-
-    let &(row, col) = match grid_map.get(&code) {
-        Some(coord) => coord,
-        None => return,
-    };
-
-    let rect = kbd_rects.get(row).and_then(|r| r.get(col));
-    let Some(&cell) = rect else { return };
-
-    let color = if app.last_correct { CORRECT } else { INCORRECT };
-
-    frame.render_widget(
-        Block::new()
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded)
-            .border_style(Style::new().fg(color))
-            .style(Style::new().bg(color).fg(Color::Black)),
-        cell,
-    );
 }
