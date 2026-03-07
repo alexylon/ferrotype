@@ -23,6 +23,13 @@ async fn main() -> Result<()> {
     enable_raw_mode()?;
     execute!(stdout(), EnterAlternateScreen)?;
 
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let _ = execute!(std::io::stderr(), LeaveAlternateScreen);
+        let _ = disable_raw_mode();
+        default_hook(info);
+    }));
+
     let result = run_app().await;
 
     execute!(stdout(), LeaveAlternateScreen)?;
@@ -48,6 +55,11 @@ async fn run_app() -> Result<()> {
 
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
     tokio::spawn(run_input_loop(tx));
+
+    terminal.draw(|frame| {
+        let regions = compute_regions(frame.area());
+        draw(frame, &app, &regions, &rows, &grid_map);
+    })?;
 
     loop {
         let Some(event) = rx.recv().await else { break };

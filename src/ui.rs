@@ -18,7 +18,6 @@ const ACCENT: Color = Color::Cyan;
 const DIM_TEXT: Color = Color::DarkGray;
 const CORRECT: Color = Color::Rgb(100, 180, 255);
 const INCORRECT: Color = Color::Rgb(255, 170, 60);
-const HINT: Color = Color::Rgb(60, 80, 100);
 
 pub struct Regions {
     header: Rect,
@@ -71,7 +70,7 @@ fn build_keyboard_rects(area: Rect, rows: &[Vec<KeyDef>]) -> Vec<Rc<[Rect]>> {
     // Largest odd width that fits 13 keys (the widest row) in the area.
     // Odd cell width → odd inner width (cell - 2 borders) → perfect centering.
     let raw = area.width / 13;
-    let unit_width = if raw % 2 == 0 {
+    let unit_width = if raw.is_multiple_of(2) {
         raw.saturating_sub(1).max(1)
     } else {
         raw
@@ -351,7 +350,13 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
         }
         Some(doc) => {
             let pos = doc.cursor_position();
-            let (done, remaining) = doc.current_line.split_at(pos);
+            let byte_pos = doc
+                .current_line
+                .char_indices()
+                .nth(pos)
+                .map(|(i, _)| i)
+                .unwrap_or(doc.current_line.len());
+            let (done, remaining) = doc.current_line.split_at(byte_pos);
 
             let mut spans = Vec::new();
             if !done.is_empty() {

@@ -15,7 +15,9 @@ pub struct SessionRecord {
 }
 
 fn history_path() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
+    let home = std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .unwrap_or_else(|_| ".".into());
     PathBuf::from(home).join(".ferrotype").join("history.json")
 }
 
@@ -33,7 +35,10 @@ pub fn save_session(record: SessionRecord) {
     records.push(record);
 
     if let Ok(json) = serde_json::to_string_pretty(&records) {
-        let _ = fs::write(&path, json);
+        let tmp = path.with_extension("json.tmp");
+        if fs::write(&tmp, &json).is_ok() {
+            let _ = fs::rename(&tmp, &path);
+        }
     }
 }
 

@@ -113,19 +113,19 @@ fn days_to_ymd(mut days: u64) -> (u64, u64, u64) {
         30,
         31,
     ];
-    let mut mo = 0;
-    for (i, &md) in month_days.iter().enumerate() {
+    let mut mo = 1;
+    for &md in &month_days {
         if days < md {
-            mo = i as u64 + 1;
             break;
         }
         days -= md;
+        mo += 1;
     }
     (y, mo, days + 1)
 }
 
 fn is_leap(y: u64) -> bool {
-    y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)
+    y.is_multiple_of(4) && (!y.is_multiple_of(100) || y.is_multiple_of(400))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -230,7 +230,7 @@ impl Document {
     pub fn advance(&mut self) {
         self.char_idx += 1;
 
-        if self.char_idx >= self.current_line.len() {
+        if self.char_idx >= self.current_line.chars().count() {
             self.line_idx += 1;
             loop {
                 match self.lines.get(self.line_idx) {
