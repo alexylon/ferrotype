@@ -94,7 +94,8 @@ const HOME_ROW: [KeyDef; 12] = [
     wide!(KeyCode::Enter, "⏎"),
 ];
 
-const BOTTOM_ROW: [KeyDef; 10] = [
+const BOTTOM_ROW: [KeyDef; 12] = [
+    wide!(KeyCode::Modifier(ModifierKeyCode::LeftShift), "⇧"),
     key!(KeyCode::Char('Z'), "Z"),
     key!(KeyCode::Char('X'), "X"),
     key!(KeyCode::Char('C'), "C"),
@@ -105,6 +106,7 @@ const BOTTOM_ROW: [KeyDef; 10] = [
     key!(KeyCode::Char(','), KeyCode::Char('<'), ","),
     key!(KeyCode::Char('.'), KeyCode::Char('>'), "."),
     key!(KeyCode::Char('/'), KeyCode::Char('?'), "/"),
+    wide!(KeyCode::Modifier(ModifierKeyCode::RightShift), "⇧"),
 ];
 
 const MODIFIER_ROW: [KeyDef; 7] = [

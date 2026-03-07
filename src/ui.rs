@@ -90,14 +90,50 @@ pub fn draw(
 ) {
     let kbd_rects = build_keyboard_rects(regions.keyboard_area, rows);
 
-    let hint_coord = app
+    let hint_coords: Vec<GridCoord> = app
         .document
         .as_ref()
         .and_then(|d| d.expected_char())
-        .and_then(|ch| {
+        .map(|ch| {
+            let mut coords = Vec::new();
             let key = KeyCode::Char(ch.to_ascii_uppercase());
-            grid_map.get(&key).copied()
-        });
+            if let Some(&coord) = grid_map.get(&key) {
+                coords.push(coord);
+            }
+            let needs_shift = ch.is_uppercase()
+                || matches!(
+                    ch,
+                    '!' | '@'
+                        | '#'
+                        | '$'
+                        | '%'
+                        | '^'
+                        | '&'
+                        | '*'
+                        | '('
+                        | ')'
+                        | '_'
+                        | '+'
+                        | '{'
+                        | '}'
+                        | '|'
+                        | ':'
+                        | '"'
+                        | '<'
+                        | '>'
+                        | '?'
+                        | '~'
+                );
+            if needs_shift {
+                if let Some(&coord) = grid_map.get(&KeyCode::Modifier(
+                    crossterm::event::ModifierKeyCode::LeftShift,
+                )) {
+                    coords.push(coord);
+                }
+            }
+            coords
+        })
+        .unwrap_or_default();
 
     draw_header(frame, app, regions.header);
     if app.viewing_history {
@@ -106,7 +142,7 @@ pub fn draw(
         draw_text_panel(frame, app, regions.text_area);
         draw_search_overlay(frame, app, regions.search_area);
     }
-    draw_keyboard(frame, rows, &kbd_rects, hint_coord);
+    draw_keyboard(frame, rows, &kbd_rects, &hint_coords);
     draw_key_highlight(frame, app, &kbd_rects, grid_map);
 }
 
@@ -427,7 +463,7 @@ fn draw_keyboard(
     frame: &mut Frame,
     rows: &[Vec<KeyDef>],
     kbd_rects: &[Rc<[Rect]>],
-    hint_coord: Option<GridCoord>,
+    hint_coords: &[GridCoord],
 ) {
     for (row_idx, row) in rows.iter().enumerate() {
         let Some(row_rects) = kbd_rects.get(row_idx) else {
@@ -439,7 +475,7 @@ fn draw_keyboard(
                 continue;
             };
 
-            let is_hint = hint_coord == Some((row_idx, col_idx));
+            let is_hint = hint_coords.contains(&(row_idx, col_idx));
 
             let border_color = if is_hint { ACCENT } else { DIM_BORDER };
             let block = Block::new()
