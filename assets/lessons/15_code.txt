@@ -1,0 +1,46 @@
+fn main() {
+    println!("Hello, world!");
+}
+
+let mut count = 0;
+for i in 0..10 {
+    count += i;
+}
+
+if x > 0 && y < 100 {
+    result = (x + y) * 2;
+} else {
+    result = x - y;
+}
+
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Point {
+    fn distance(&self, other: &Point) -> f64 {
+        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()
+    }
+}
+
+fn factorial(n: u64) -> u64 {
+    match n {
+        0 | 1 => 1,
+        _ => n * factorial(n - 1),
+    }
+}
+
+let names: Vec<&str> = vec!["Alice", "Bob", "Charlie"];
+let lengths: Vec<usize> = names.iter().map(|s| s.len()).collect();
+
+pub enum Color {
+    Red,
+    Green,
+    Blue,
+    Custom(u8, u8, u8),
+}
+
+fn parse_value(input: &str) -> Result<i32, String> {
+    input.parse::<i32>().map_err(|e| format!("Error: {}", e))
+}

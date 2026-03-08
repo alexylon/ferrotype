@@ -6,13 +6,13 @@ A terminal typing tutor built with Rust and [ratatui](https://ratatui.rs). Pract
 
 ## Features
 
-- **12 built-in lessons** — progressive drills from home row basics to full paragraphs, ordered by difficulty
+- **15 built-in lessons** — progressive drills from home row basics to full paragraphs and code, ordered by difficulty
 - **Live stats** — WPM, accuracy %, elapsed time, keystrokes, and line progress update as you type
 - **Virtual keyboard** — highlights the expected next key, including Shift for capitals and symbols; adapts to macOS and PC layouts
 - **Error feedback** — wrong keystrokes are shown inline and block progress until corrected with Backspace
 - **Completion summary** — final WPM, accuracy percentage, and your weakest keys
 - **Session history** — results saved to `~/.ferrotype/history.json` with per-lesson tracking, scrollable history view, and averages across completed sessions
-- **Progress tracking** — the menu cursor remembers your last lesson: points to it if unfinished, advances to the next if completed
+- **Progress tracking** — the menu cursor remembers your last built-in lesson: points to it if unfinished, advances to the next if completed
 - **Custom text** — load any text file via `Ctrl-F` or as a CLI argument
 - **Graceful shutdown** — in-progress sessions are saved on SIGTERM/SIGHUP
 
@@ -21,17 +21,20 @@ A terminal typing tutor built with Rust and [ratatui](https://ratatui.rs). Pract
 | # | Lesson | Focus |
 |---|--------|-------|
 | 1 | f j d k | Index fingers |
-| 2 | a s d f j k l ; | Home row |
-| 3 | g h (home row) | Home row complete |
-| 4 | e i r u | Top row reach |
-| 5 | q w e r t y u i o p | Full top row |
-| 6 | z x c v b n m , . | Bottom row |
-| 7 | All Letters | Pangrams |
-| 8 | Capitals & Shift | Mixed case |
-| 9 | 0-9 Numbers | Numbers in context |
-| 10 | Punctuation & Symbols | Special characters |
-| 11 | Common Words | High-frequency words |
-| 12 | Full Paragraphs | Real-world text |
+| 2 | d k (+ f j) | Index + middle fingers |
+| 3 | s l ; (+ f j d k) | Ring + pinky fingers |
+| 4 | a s d f j k l ; | Full home row |
+| 5 | g h (home row) | Home row complete |
+| 6 | e i r u | Top row reach |
+| 7 | q w e r t y u i o p | Full top row |
+| 8 | z x c v b n m , . | Bottom row |
+| 9 | All Letters | Pangrams |
+| 10 | Capitals & Shift | Mixed case |
+| 11 | 0-9 Numbers | Numbers in context |
+| 12 | Punctuation & Symbols | Special characters |
+| 13 | Common Words | High-frequency words |
+| 14 | Full Paragraphs | Real-world text |
+| 15 | Code (Rust) | Programming syntax |
 
 ## Build & Run
 
