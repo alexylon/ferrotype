@@ -20,7 +20,7 @@ fn history_path() -> PathBuf {
     let home = std::env::var("HOME")
         .or_else(|_| std::env::var("USERPROFILE"))
         .unwrap_or_else(|_| ".".into());
-    PathBuf::from(home).join(".ferrotype").join("history.json")
+    PathBuf::from(home).join(".clavirio").join("history.json")
 }
 
 pub fn save_session(record: SessionRecord) {

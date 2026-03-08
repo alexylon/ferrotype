@@ -21,8 +21,8 @@ jobs:
           CODEBERG_USERNAME: ${{ secrets.CODEBERG_USERNAME }}
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
 
-          GITLAB_REPO: "ferrotype"
-          CODEBERG_REPO: "ferrotype"
+          GITLAB_REPO: "clavirio"
+          CODEBERG_REPO: "clavirio"
         run: |
           set -euo pipefail
           export GIT_TERMINAL_PROMPT=0

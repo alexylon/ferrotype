@@ -1,6 +1,6 @@
-# FerroType
+# Clavirio
 
-<div align="center"><img src="/assets/images/screenshot.png" style="width: 800px;" alt="FerroType"></div>
+<div align="center"><img src="/assets/images/screenshot.png" style="width: 800px;" alt="Clavirio"></div>
 
 A terminal typing tutor built with Rust and [ratatui](https://ratatui.rs). Practice with built-in lessons or any text file while a virtual keyboard tracks your keystrokes in real time.
 
@@ -11,7 +11,7 @@ A terminal typing tutor built with Rust and [ratatui](https://ratatui.rs). Pract
 - **Virtual keyboard** — highlights the expected next key, including Shift for capitals and symbols; adapts to macOS and PC layouts
 - **Error feedback** — wrong keystrokes are shown inline and block progress until corrected with Backspace
 - **Completion summary** — final WPM, accuracy percentage, and your weakest keys
-- **Session history** — results saved to `~/.ferrotype/history.json` with per-lesson tracking, scrollable history view, and averages across completed sessions
+- **Session history** — results saved to `~/.clavirio/history.json` with per-lesson tracking, scrollable history view, and averages across completed sessions
 - **Progress tracking** — the menu cursor remembers your last built-in lesson: points to it if unfinished, advances to the next if completed
 - **Custom text** — load any text file via `Ctrl-F` or as a CLI argument
 - **Graceful shutdown** — in-progress sessions are saved on SIGTERM/SIGHUP
@@ -51,7 +51,7 @@ cargo run -- sample.txt
 
 ## Terminal Size
 
-FerroType is a terminal UI application — your terminal window should be large enough to display all elements (text panel, keyboard, stats).
+Clavirio is a terminal UI application — your terminal window should be large enough to display all elements (text panel, keyboard, stats).
 On a laptop screen this usually means a maximized terminal window.
 
 ## Controls

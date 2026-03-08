@@ -114,6 +114,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
+name = "clavirio"
+version = "0.2.2"
+dependencies = [
+ "crossterm",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "time",
+ "tokio",
+]
+
+[[package]]
 name = "compact_str"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -321,18 +333,6 @@ checksum = "b95f7c0680e4142284cf8b22c14a476e87d61b004a3a0861872b32ef7ead40a2"
 dependencies = [
  "bit-set",
  "regex",
-]
-
-[[package]]
-name = "ferrotype"
-version = "0.2.2"
-dependencies = [
- "crossterm",
- "ratatui",
- "serde",
- "serde_json",
- "time",
- "tokio",
 ]
 
 [[package]]

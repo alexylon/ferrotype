@@ -218,7 +218,7 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
         left,
     );
 
-    let mut center_spans = vec![Span::styled("FerroType", Style::new().fg(ACCENT).bold())];
+    let mut center_spans = vec![Span::styled("Clavirio", Style::new().fg(ACCENT).bold())];
     if let Some(doc) = &app.document {
         let (cur, total) = doc.line_progress();
         center_spans.push(Span::styled(
