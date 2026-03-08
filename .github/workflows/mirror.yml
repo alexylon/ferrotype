@@ -1,0 +1,39 @@
+name: Mirror to GitLab and Codeberg
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *" # daily at 03:17 UTC
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror to GitLab and Codeberg (bare mirror clone)
+        env:
+          GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          CODEBERG_USERNAME: ${{ secrets.CODEBERG_USERNAME }}
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+
+          GITLAB_REPO: "ferrotype"
+          CODEBERG_REPO: "ferrotype"
+        run: |
+          set -euo pipefail
+          export GIT_TERMINAL_PROMPT=0
+
+          GITLAB_REPO_URL="https://oauth2:${GITLAB_TOKEN}@gitlab.com/${GITLAB_USERNAME}/${GITLAB_REPO}.git"
+          CODEBERG_REPO_URL="https://${CODEBERG_USERNAME}:${CODEBERG_TOKEN}@codeberg.org/${CODEBERG_USERNAME}/${CODEBERG_REPO}.git"
+
+          # Create a bare mirror clone of the *current* GitHub repo
+          git clone --mirror "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" repo.git
+          cd repo.git
+
+          # Push everything (all refs + deletions)
+          git push --mirror "${GITLAB_REPO_URL}"
+          git push --mirror "${CODEBERG_REPO_URL}"
