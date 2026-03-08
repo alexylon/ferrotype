@@ -165,3 +165,46 @@ pub fn build_keycode_grid_map(rows: &[Vec<KeyDef>]) -> HashMap<KeyCode, GridCoor
 
     map
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn grid_map_contains_primary_keys() {
+        let rows = build_keyboard_rows();
+        let map = build_keycode_grid_map(&rows);
+        // 'A' is in home row (row 2), first key (col 0)
+        assert_eq!(map.get(&KeyCode::Char('A')), Some(&(2, 0)));
+        // 'Q' is in top row (row 1), first key (col 0)
+        assert_eq!(map.get(&KeyCode::Char('Q')), Some(&(1, 0)));
+    }
+
+    #[test]
+    fn grid_map_contains_secondary_keys() {
+        let rows = build_keyboard_rows();
+        let map = build_keycode_grid_map(&rows);
+        // '!' is secondary of '1', which is number row (row 0), col 0
+        assert_eq!(map.get(&KeyCode::Char('!')), Some(&(0, 0)));
+        // '@' is secondary of '2', row 0, col 1
+        assert_eq!(map.get(&KeyCode::Char('@')), Some(&(0, 1)));
+    }
+
+    #[test]
+    fn grid_map_secondary_shares_coord_with_primary() {
+        let rows = build_keyboard_rows();
+        let map = build_keycode_grid_map(&rows);
+        // ';' and ':' should map to the same grid position
+        let semi = map.get(&KeyCode::Char(';'));
+        let colon = map.get(&KeyCode::Char(':'));
+        assert!(semi.is_some());
+        assert_eq!(semi, colon);
+    }
+
+    #[test]
+    fn grid_map_spacebar_mapped() {
+        let rows = build_keyboard_rows();
+        let map = build_keycode_grid_map(&rows);
+        assert!(map.contains_key(&KeyCode::Char(' ')));
+    }
+}

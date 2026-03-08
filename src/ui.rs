@@ -468,7 +468,7 @@ fn draw_search_overlay(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 /// Turn "2026-03-06T22:01:05" into "Mar 06  22:01"
-fn friendly_timestamp(ts: &str) -> String {
+pub(crate) fn friendly_timestamp(ts: &str) -> String {
     const MONTHS: [&str; 12] = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
@@ -585,6 +585,37 @@ fn draw_history(frame: &mut Frame, app: &App, area: Rect) {
     ]));
 
     frame.render_widget(Paragraph::new(lines).block(block), inner);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn friendly_timestamp_full_iso() {
+        assert_eq!(friendly_timestamp("2026-03-06T22:01:05"), "Mar 06  22:01");
+    }
+
+    #[test]
+    fn friendly_timestamp_january() {
+        assert_eq!(friendly_timestamp("2025-01-15T09:30:00"), "Jan 15  09:30");
+    }
+
+    #[test]
+    fn friendly_timestamp_december() {
+        assert_eq!(friendly_timestamp("2025-12-31T23:59:59"), "Dec 31  23:59");
+    }
+
+    #[test]
+    fn friendly_timestamp_short_string_passthrough() {
+        assert_eq!(friendly_timestamp("short"), "short");
+    }
+
+    #[test]
+    fn friendly_timestamp_invalid_month_shows_fallback() {
+        // month "00" → wrapping_sub(1) overflows → fallback "???"
+        assert_eq!(friendly_timestamp("2025-00-01T12:00:00"), "??? 01  12:00");
+    }
 }
 
 fn draw_keyboard(

@@ -980,4 +980,60 @@ mod tests {
         app.handle_event(InputEvent::Press(ctrl_key('a'))); // ctrl-a ignored
         assert_eq!(app.file_path_buf, "");
     }
+
+    // --- Esc from active typing ---
+
+    #[test]
+    fn esc_from_active_typing_returns_to_menu() {
+        let mut app = App::new();
+        app.document = Some(Document::from_text("hello").unwrap());
+        app.handle_event(InputEvent::Press(key_event(KeyCode::Char('h'))));
+        assert!(app.document.is_some());
+        assert!(app.start_time.is_some());
+
+        let quit = app.handle_event(InputEvent::Press(key_event(KeyCode::Esc)));
+        assert!(!quit);
+        assert!(app.document.is_none());
+        assert_eq!(app.correct_count, 0);
+        assert!(app.start_time.is_none());
+    }
+
+    // --- Ctrl-R no-op without document ---
+
+    #[test]
+    fn ctrl_r_without_document_is_noop() {
+        let mut app = App::new();
+        app.handle_event(InputEvent::Press(ctrl_key('r')));
+        assert!(app.document.is_none());
+        assert_eq!(app.correct_count, 0);
+    }
+
+    // --- search submit ---
+
+    #[test]
+    fn search_enter_invalid_path_sets_error() {
+        let mut app = App::new();
+        app.handle_event(InputEvent::Press(ctrl_key('f')));
+        for c in "/no/such/file.txt".chars() {
+            app.handle_event(InputEvent::Press(key_event(KeyCode::Char(c))));
+        }
+        app.handle_event(InputEvent::Press(key_event(KeyCode::Enter)));
+        assert!(!app.searching);
+        assert!(app.error.is_some());
+        assert!(app.document.is_none());
+    }
+
+    #[test]
+    fn search_enter_valid_file_loads_document() {
+        let mut app = App::new();
+        app.handle_event(InputEvent::Press(ctrl_key('f')));
+        for c in "sample.txt".chars() {
+            app.handle_event(InputEvent::Press(key_event(KeyCode::Char(c))));
+        }
+        app.handle_event(InputEvent::Press(key_event(KeyCode::Enter)));
+        assert!(!app.searching);
+        assert!(app.error.is_none());
+        assert!(app.document.is_some());
+        assert_eq!(app.lesson_name, "sample.txt");
+    }
 }
