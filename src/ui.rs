@@ -160,7 +160,10 @@ pub fn draw(
         })
         .unwrap_or_default();
 
-    draw_header(frame, app, regions.header);
+    let hint_finger = hint_coords
+        .first()
+        .and_then(|&coord| finger_for_coord(coord));
+    draw_header(frame, app, regions.header, hint_finger);
     if app.viewing_history {
         draw_history(frame, app, regions.text_area);
     } else {
@@ -182,7 +185,7 @@ pub fn draw(
     );
 }
 
-fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
+fn draw_header(frame: &mut Frame, app: &App, area: Rect, hint_finger: Option<Finger>) {
     let [left, center, right] = Layout::horizontal([
         Constraint::Percentage(30),
         Constraint::Min(0),
@@ -225,6 +228,20 @@ fn draw_header(frame: &mut Frame, app: &App, area: Rect) {
             format!("  {cur}/{total}"),
             Style::new().fg(DIM_TEXT),
         ));
+    }
+    if let Some(finger) = hint_finger {
+        let name = match finger {
+            Finger::Pinky => "pinky",
+            Finger::Ring => "ring",
+            Finger::Middle => "middle",
+            Finger::Index => "index",
+            Finger::Thumb => "thumb",
+        };
+        center_spans.push(Span::styled(
+            format!("  {} ", finger.label()),
+            Style::new().fg(Color::Yellow).bold(),
+        ));
+        center_spans.push(Span::styled(name, Style::new().fg(DIM_TEXT)));
     }
     frame.render_widget(Paragraph::new(Line::from(center_spans)).centered(), center);
 
@@ -654,6 +671,20 @@ fn draw_keyboard(
 
             let inner = block.inner(cell);
             frame.render_widget(block, cell);
+
+            // Show finger abbreviation on the top border of hint keys
+            if is_hint {
+                if let Some(finger) = finger_for_coord((row_idx, col_idx)) {
+                    frame.render_widget(
+                        Paragraph::new(Span::styled(
+                            finger.label(),
+                            Style::new().fg(Color::Yellow),
+                        ))
+                        .centered(),
+                        cell,
+                    );
+                }
+            }
 
             let label = key_def.label;
             let has_secondary = key_def.secondary.and_then(|s| match s {

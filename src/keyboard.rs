@@ -151,6 +151,81 @@ pub fn build_keyboard_rows() -> Vec<Vec<KeyDef>> {
     ]
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Finger {
+    Pinky,
+    Ring,
+    Middle,
+    Index,
+    Thumb,
+}
+
+impl Finger {
+    pub fn label(self) -> &'static str {
+        match self {
+            Finger::Pinky => "P",
+            Finger::Ring => "R",
+            Finger::Middle => "M",
+            Finger::Index => "I",
+            Finger::Thumb => "T",
+        }
+    }
+}
+
+/// Returns the finger for a key at the given grid coordinate.
+pub fn finger_for_coord(coord: GridCoord) -> Option<Finger> {
+    let (row, col) = coord;
+    match row {
+        // Number row: 1  2  3  4  5  6  7  8  9  0  -  =  backslash
+        0 => match col {
+            0 => Some(Finger::Pinky),
+            1 => Some(Finger::Ring),
+            2 => Some(Finger::Middle),
+            3 | 4 => Some(Finger::Index),
+            5 | 6 => Some(Finger::Index),
+            7 => Some(Finger::Middle),
+            8 => Some(Finger::Ring),
+            _ => Some(Finger::Pinky),
+        },
+        // Top row: Q  W  E  R  T  Y  U  I  O  P  [  ]
+        1 => match col {
+            0 => Some(Finger::Pinky),
+            1 => Some(Finger::Ring),
+            2 => Some(Finger::Middle),
+            3 | 4 => Some(Finger::Index),
+            5 | 6 => Some(Finger::Index),
+            7 => Some(Finger::Middle),
+            8 => Some(Finger::Ring),
+            _ => Some(Finger::Pinky),
+        },
+        // Home row: A  S  D  F  G  H  J  K  L  ;  '  Enter
+        2 => match col {
+            0 => Some(Finger::Pinky),
+            1 => Some(Finger::Ring),
+            2 => Some(Finger::Middle),
+            3 | 4 => Some(Finger::Index),
+            5 | 6 => Some(Finger::Index),
+            7 => Some(Finger::Middle),
+            8 => Some(Finger::Ring),
+            _ => Some(Finger::Pinky),
+        },
+        // Bottom row: LShift  Z  X  C  V  B  N  M  ,  .  /  RShift
+        3 => match col {
+            0 | 1 => Some(Finger::Pinky),
+            2 => Some(Finger::Ring),
+            3 => Some(Finger::Middle),
+            4 | 5 => Some(Finger::Index),
+            6 | 7 => Some(Finger::Index),
+            8 => Some(Finger::Middle),
+            9 => Some(Finger::Ring),
+            _ => Some(Finger::Pinky),
+        },
+        // Modifier row: space = thumb
+        4 => Some(Finger::Thumb),
+        _ => None,
+    }
+}
+
 pub fn build_keycode_grid_map(rows: &[Vec<KeyDef>]) -> HashMap<KeyCode, GridCoord> {
     let mut map = HashMap::new();
 

@@ -10,7 +10,7 @@ A terminal typing tutor built with Rust and [ratatui](https://ratatui.rs). Pract
 
 - **15 built-in lessons** — progressive drills from home row basics to full paragraphs and code, ordered by difficulty
 - **Live stats** — WPM, accuracy %, elapsed time, keystrokes, and line progress update as you type
-- **Virtual keyboard** — highlights the expected next key, including Shift for capitals and symbols; adapts to macOS and PC layouts
+- **Virtual keyboard** — highlights the expected next key (including Shift) with a finger hint (**P**inky, **R**ing, **M**iddle, **I**ndex, **T**humb) on the top border; adapts to macOS and PC layouts
 - **Error feedback** — wrong keystrokes are shown inline and block progress until corrected with Backspace
 - **Completion summary** — final WPM, accuracy percentage, and your weakest keys
 - **Session history** — results saved to `~/.clavirio/history.json` with per-lesson tracking, scrollable history view, and averages across completed sessions
