@@ -7,6 +7,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use time::{format_description::well_known::Iso8601, OffsetDateTime, UtcOffset};
 
 use crate::input::InputEvent;
+use crate::settings::KeyboardLayout;
 
 fn chrono_now() -> String {
     let now = OffsetDateTime::now_utc()
@@ -164,6 +165,7 @@ pub struct App {
     pub history_scroll: usize,
     pub selected_lesson: usize,
     pub lesson_id: String,
+    pub layout: KeyboardLayout,
 }
 
 impl App {
@@ -188,6 +190,7 @@ impl App {
             history_scroll: 0,
             selected_lesson,
             lesson_id: String::new(),
+            layout: KeyboardLayout::default(),
         }
     }
 
@@ -423,6 +426,9 @@ impl App {
                 self.history = crate::history::load_history();
                 self.history_scroll = self.history.len().saturating_sub(1);
                 self.viewing_history = true;
+            }
+            KeyCode::Char('l') => {
+                self.layout = self.layout.cycle();
             }
             _ => {}
         }

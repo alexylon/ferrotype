@@ -3,6 +3,7 @@ mod history;
 mod input;
 mod keyboard;
 mod lessons;
+mod settings;
 mod ui;
 
 use std::io::{stdout, Result};
@@ -16,6 +17,7 @@ use ratatui::prelude::*;
 use app::App;
 use input::run_input_loop;
 use keyboard::{build_keyboard_rows, build_keycode_grid_map};
+use settings::load_settings;
 use ui::{compute_regions, draw};
 
 #[tokio::main(flavor = "current_thread")]
@@ -60,9 +62,11 @@ async fn run_app() -> Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
 
-    let rows = build_keyboard_rows();
-    let grid_map = build_keycode_grid_map(&rows);
+    let mut settings = load_settings();
+    let mut rows = build_keyboard_rows(settings.keyboard.layout);
+    let mut grid_map = build_keycode_grid_map(&rows);
     let mut app = App::new();
+    app.layout = settings.keyboard.layout;
 
     if let Some(path) = std::env::args().nth(1) {
         match app::Document::load(&path) {
@@ -99,6 +103,14 @@ async fn run_app() -> Result<()> {
 
         if app.handle_event(event) {
             break;
+        }
+
+        // Rebuild keyboard if layout changed
+        if app.layout != settings.keyboard.layout {
+            settings.keyboard.layout = app.layout;
+            settings::save_settings(&settings);
+            rows = build_keyboard_rows(settings.keyboard.layout);
+            grid_map = build_keycode_grid_map(&rows);
         }
 
         terminal.draw(|frame| {
