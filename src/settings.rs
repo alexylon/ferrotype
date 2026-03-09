@@ -38,10 +38,36 @@ pub struct KeyboardSettings {
     pub layout: KeyboardLayout,
 }
 
+fn default_true() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisplaySettings {
+    #[serde(default = "default_true")]
+    pub show_keyboard: bool,
+    #[serde(default = "default_true")]
+    pub show_hints: bool,
+    #[serde(default = "default_true")]
+    pub show_fingers: bool,
+}
+
+impl Default for DisplaySettings {
+    fn default() -> Self {
+        Self {
+            show_keyboard: true,
+            show_hints: true,
+            show_fingers: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Settings {
     #[serde(default)]
     pub keyboard: KeyboardSettings,
+    #[serde(default)]
+    pub display: DisplaySettings,
 }
 
 fn settings_path() -> PathBuf {
@@ -95,6 +121,7 @@ mod tests {
             keyboard: KeyboardSettings {
                 layout: KeyboardLayout::Dvorak,
             },
+            ..Settings::default()
         };
         let content = toml::to_string(&s).unwrap();
         let parsed: Settings = toml::from_str(&content).unwrap();

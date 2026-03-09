@@ -67,6 +67,9 @@ async fn run_app() -> Result<()> {
     let mut grid_map = build_keycode_grid_map(&rows);
     let mut app = App::new();
     app.layout = settings.keyboard.layout;
+    app.show_keyboard = settings.display.show_keyboard;
+    app.show_hints = settings.display.show_hints;
+    app.show_fingers = settings.display.show_fingers;
 
     if let Some(path) = std::env::args().nth(1) {
         match app::Document::load(&path) {
@@ -86,7 +89,7 @@ async fn run_app() -> Result<()> {
     tokio::spawn(run_input_loop(tx));
 
     terminal.draw(|frame| {
-        let regions = compute_regions(frame.area());
+        let regions = compute_regions(frame.area(), app.show_keyboard);
         draw(frame, &app, &regions, &rows, &grid_map);
     })?;
 
@@ -105,16 +108,26 @@ async fn run_app() -> Result<()> {
             break;
         }
 
-        // Rebuild keyboard if layout changed
-        if app.layout != settings.keyboard.layout {
+        // Sync settings if anything changed
+        let display_changed = app.show_keyboard != settings.display.show_keyboard
+            || app.show_hints != settings.display.show_hints
+            || app.show_fingers != settings.display.show_fingers;
+        let layout_changed = app.layout != settings.keyboard.layout;
+
+        if layout_changed || display_changed {
             settings.keyboard.layout = app.layout;
+            settings.display.show_keyboard = app.show_keyboard;
+            settings.display.show_hints = app.show_hints;
+            settings.display.show_fingers = app.show_fingers;
             settings::save_settings(&settings);
-            rows = build_keyboard_rows(settings.keyboard.layout);
-            grid_map = build_keycode_grid_map(&rows);
+            if layout_changed {
+                rows = build_keyboard_rows(settings.keyboard.layout);
+                grid_map = build_keycode_grid_map(&rows);
+            }
         }
 
         terminal.draw(|frame| {
-            let regions = compute_regions(frame.area());
+            let regions = compute_regions(frame.area(), app.show_keyboard);
             draw(frame, &app, &regions, &rows, &grid_map);
         })?;
     }

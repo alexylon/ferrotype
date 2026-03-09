@@ -34,13 +34,19 @@ fn clamp_width(area: Rect) -> Rect {
     Rect::new(area.x + pad, area.y, MAX_WIDTH, area.height)
 }
 
-pub fn compute_regions(area: Rect) -> Regions {
+pub fn compute_regions(area: Rect, show_keyboard: bool) -> Regions {
     let clamped = clamp_width(area);
+
+    let kbd_height = if show_keyboard {
+        (KEYBOARD_ROWS as u16) * 4
+    } else {
+        0
+    };
 
     let [header, body, keyboard_area] = Layout::vertical([
         Constraint::Length(3),
         Constraint::Min(5),
-        Constraint::Length((KEYBOARD_ROWS as u16) * 4),
+        Constraint::Length(kbd_height),
     ])
     .areas(clamped);
 
@@ -113,56 +119,68 @@ pub fn draw(
     rows: &[Vec<KeyDef>],
     grid_map: &HashMap<KeyCode, GridCoord>,
 ) {
-    let kbd_rects = build_keyboard_rects(regions.keyboard_area, rows);
+    let on_menu = app.document.is_none() && app.error.is_none() && !app.searching;
 
-    let hint_coords: Vec<GridCoord> = app
-        .document
-        .as_ref()
-        .and_then(|d| d.expected_char())
-        .map(|ch| {
-            let mut coords = Vec::new();
-            let key = KeyCode::Char(ch.to_ascii_uppercase());
-            if let Some(&coord) = grid_map.get(&key) {
-                coords.push(coord);
-            }
-            let needs_shift = ch.is_uppercase()
-                || matches!(
-                    ch,
-                    '!' | '@'
-                        | '#'
-                        | '$'
-                        | '%'
-                        | '^'
-                        | '&'
-                        | '*'
-                        | '('
-                        | ')'
-                        | '_'
-                        | '+'
-                        | '{'
-                        | '}'
-                        | '|'
-                        | ':'
-                        | '"'
-                        | '<'
-                        | '>'
-                        | '?'
-                        | '~'
-                );
-            if needs_shift {
-                if let Some(&coord) = grid_map.get(&KeyCode::Modifier(
-                    crossterm::event::ModifierKeyCode::LeftShift,
-                )) {
-                    coords.push(coord);
-                }
-            }
-            coords
-        })
-        .unwrap_or_default();
+    let hint_coords: Vec<GridCoord> = if app.show_hints {
+        if on_menu {
+            // Preview: highlight Enter key so the user sees the effect of display toggles
+            grid_map.get(&KeyCode::Enter).copied().into_iter().collect()
+        } else {
+            app.document
+                .as_ref()
+                .and_then(|d| d.expected_char())
+                .map(|ch| {
+                    let mut coords = Vec::new();
+                    let key = KeyCode::Char(ch.to_ascii_uppercase());
+                    if let Some(&coord) = grid_map.get(&key) {
+                        coords.push(coord);
+                    }
+                    let needs_shift = ch.is_uppercase()
+                        || matches!(
+                            ch,
+                            '!' | '@'
+                                | '#'
+                                | '$'
+                                | '%'
+                                | '^'
+                                | '&'
+                                | '*'
+                                | '('
+                                | ')'
+                                | '_'
+                                | '+'
+                                | '{'
+                                | '}'
+                                | '|'
+                                | ':'
+                                | '"'
+                                | '<'
+                                | '>'
+                                | '?'
+                                | '~'
+                        );
+                    if needs_shift {
+                        if let Some(&coord) = grid_map.get(&KeyCode::Modifier(
+                            crossterm::event::ModifierKeyCode::LeftShift,
+                        )) {
+                            coords.push(coord);
+                        }
+                    }
+                    coords
+                })
+                .unwrap_or_default()
+        }
+    } else {
+        Vec::new()
+    };
 
-    let hint_finger = hint_coords
-        .first()
-        .and_then(|&coord| finger_for_coord(coord));
+    let hint_finger = if app.show_fingers {
+        hint_coords
+            .first()
+            .and_then(|&coord| finger_for_coord(coord))
+    } else {
+        None
+    };
     draw_header(frame, app, regions.header, hint_finger);
     if app.viewing_history {
         draw_history(frame, app, regions.text_area);
@@ -170,19 +188,27 @@ pub fn draw(
         draw_text_panel(frame, app, regions.text_area);
         draw_search_overlay(frame, app, regions.search_area);
     }
-    let highlight_coord: Option<GridCoord> = app
-        .highlighted_key
-        .and_then(|code| grid_map.get(&code))
-        .copied();
-    let highlight_color = if app.last_correct { CORRECT } else { INCORRECT };
-    draw_keyboard(
-        frame,
-        rows,
-        &kbd_rects,
-        &hint_coords,
-        highlight_coord,
-        highlight_color,
-    );
+
+    if app.show_keyboard {
+        let kbd_rects = build_keyboard_rects(regions.keyboard_area, rows);
+        let highlight_coord: Option<GridCoord> = if app.show_hints {
+            app.highlighted_key
+                .and_then(|code| grid_map.get(&code))
+                .copied()
+        } else {
+            None
+        };
+        let highlight_color = if app.last_correct { CORRECT } else { INCORRECT };
+        draw_keyboard(
+            frame,
+            rows,
+            &kbd_rects,
+            &hint_coords,
+            highlight_coord,
+            highlight_color,
+            app.show_fingers,
+        );
+    }
 }
 
 fn draw_header(frame: &mut Frame, app: &App, area: Rect, hint_finger: Option<Finger>) {
@@ -284,7 +310,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
     }
 
     let ideal_height = if app.document.is_none() && app.error.is_none() {
-        (crate::lessons::LESSONS.len() as u16) + 7
+        (crate::lessons::LESSONS.len() as u16) + 8
     } else {
         7
     };
@@ -343,6 +369,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
                     ),
                 ]));
             }
+            let on_off = |on: bool| if on { "on" } else { "off" };
             lines.push(Line::from(""));
             lines.push(Line::from(vec![
                 Span::styled("Enter", Style::new().fg(ACCENT)),
@@ -350,11 +377,38 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect) {
                 Span::styled("h", Style::new().fg(ACCENT)),
                 Span::styled(" history  ", Style::new().fg(DIM_TEXT)),
                 Span::styled("l", Style::new().fg(ACCENT)),
-                Span::styled(format!(" {} ", app.layout), Style::new().fg(DIM_TEXT)),
-                Span::styled(" ^F", Style::new().fg(ACCENT)),
-                Span::styled(" open file  ", Style::new().fg(DIM_TEXT)),
+                Span::styled(format!(" {}  ", app.layout), Style::new().fg(DIM_TEXT)),
+                Span::styled("^F", Style::new().fg(ACCENT)),
+                Span::styled(" file  ", Style::new().fg(DIM_TEXT)),
                 Span::styled("Esc", Style::new().fg(ACCENT)),
                 Span::styled(" quit", Style::new().fg(DIM_TEXT)),
+            ]));
+            let fingers_fg = if app.show_hints {
+                DIM_TEXT
+            } else {
+                Color::Rgb(60, 60, 60)
+            };
+            let fingers_key_fg = if app.show_hints {
+                ACCENT
+            } else {
+                Color::Rgb(60, 60, 60)
+            };
+            lines.push(Line::from(vec![
+                Span::styled("1", Style::new().fg(fingers_key_fg)),
+                Span::styled(
+                    format!(" fingers {}  ", on_off(app.show_fingers)),
+                    Style::new().fg(fingers_fg),
+                ),
+                Span::styled("2", Style::new().fg(ACCENT)),
+                Span::styled(
+                    format!(" hints {}  ", on_off(app.show_hints)),
+                    Style::new().fg(DIM_TEXT),
+                ),
+                Span::styled("3", Style::new().fg(ACCENT)),
+                Span::styled(
+                    format!(" keyboard {}", on_off(app.show_keyboard)),
+                    Style::new().fg(DIM_TEXT),
+                ),
             ]));
             frame.render_widget(Paragraph::new(lines).block(block).centered(), inner);
         }
@@ -645,6 +699,7 @@ fn draw_keyboard(
     hint_coords: &[GridCoord],
     highlight_coord: Option<GridCoord>,
     highlight_color: Color,
+    show_fingers: bool,
 ) {
     for (row_idx, row) in rows.iter().enumerate() {
         let Some(row_rects) = kbd_rects.get(row_idx) else {
@@ -675,7 +730,7 @@ fn draw_keyboard(
             frame.render_widget(block, cell);
 
             // Show finger abbreviation on the top border of hint keys
-            if is_hint {
+            if is_hint && show_fingers {
                 if let Some(finger) = finger_for_coord((row_idx, col_idx)) {
                     frame.render_widget(
                         Paragraph::new(Span::styled(

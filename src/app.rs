@@ -166,6 +166,9 @@ pub struct App {
     pub selected_lesson: usize,
     pub lesson_id: String,
     pub layout: KeyboardLayout,
+    pub show_keyboard: bool,
+    pub show_hints: bool,
+    pub show_fingers: bool,
 }
 
 impl App {
@@ -191,6 +194,9 @@ impl App {
             selected_lesson,
             lesson_id: String::new(),
             layout: KeyboardLayout::default(),
+            show_keyboard: true,
+            show_hints: true,
+            show_fingers: true,
         }
     }
 
@@ -429,6 +435,18 @@ impl App {
             }
             KeyCode::Char('l') => {
                 self.layout = self.layout.cycle();
+            }
+            KeyCode::Char('1') if self.show_hints => {
+                self.show_fingers = !self.show_fingers;
+            }
+            KeyCode::Char('2') => {
+                self.show_hints = !self.show_hints;
+                if !self.show_hints {
+                    self.show_fingers = false;
+                }
+            }
+            KeyCode::Char('3') => {
+                self.show_keyboard = !self.show_keyboard;
             }
             _ => {}
         }
