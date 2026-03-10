@@ -401,7 +401,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect, tc: &ThemeColors) {
     }
 
     let ideal_height = if app.document.is_none() && app.error.is_none() {
-        (crate::lessons::LESSONS.len() as u16) + 7
+        (crate::lessons::lesson_count() as u16) + 7
     } else {
         7
     };
@@ -434,7 +434,7 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect, tc: &ThemeColors) {
 
     match &app.document {
         None => {
-            let lessons = crate::lessons::LESSONS;
+            let lessons = crate::lessons::lessons_for_layout(app.layout);
             // borders: 2 + padding: 2 + blank: 1 + controls: 1 + settings: 1 = 7
             let chrome = 7_u16;
             let visible_slots = inner.height.saturating_sub(chrome) as usize;
@@ -448,21 +448,49 @@ fn draw_text_panel(frame: &mut Frame, app: &App, area: Rect, tc: &ThemeColors) {
                     app.selected_lesson.saturating_sub(visible_slots / 2)
                 };
 
-            let max_label = lessons.iter().map(|l| l.label.len()).max().unwrap_or(20);
+            let label_len = |l: &&crate::lessons::Lesson| {
+                if l.keys.is_empty() {
+                    l.title.len()
+                } else {
+                    l.title.len() + 2 + l.keys.len() + 1
+                }
+            };
+            let max_label: usize = [
+                crate::settings::KeyboardLayout::Qwerty,
+                crate::settings::KeyboardLayout::Dvorak,
+                crate::settings::KeyboardLayout::Colemak,
+            ]
+            .iter()
+            .flat_map(|lay| crate::lessons::lessons_for_layout(*lay))
+            .map(|l| label_len(&l))
+            .max()
+            .unwrap_or(20);
 
             let mut lines: Vec<Line> = Vec::new();
             for (i, lesson) in lessons.iter().enumerate().skip(scroll).take(visible_slots) {
                 let selected = i == app.selected_lesson;
                 let marker = if selected { "▸" } else { " " };
-                let label_fg = if selected { tc.text } else { tc.dim_text };
+                let title_fg = if selected { tc.text } else { tc.dim_text };
                 let marker_fg = if selected { tc.accent } else { tc.dim_text };
-                lines.push(Line::from(vec![
+                let mut spans = vec![
                     Span::styled(format!(" {marker} "), Style::new().fg(marker_fg).bold()),
-                    Span::styled(
-                        format!("{:<width$}", lesson.label, width = max_label),
-                        Style::new().fg(label_fg),
-                    ),
-                ]));
+                    Span::styled(lesson.title.to_string(), Style::new().fg(title_fg)),
+                ];
+                if !lesson.keys.is_empty() {
+                    spans.push(Span::styled(
+                        format!(" ({})", lesson.keys),
+                        Style::new().fg(tc.dim_text),
+                    ));
+                }
+                let current_len = if lesson.keys.is_empty() {
+                    lesson.title.len()
+                } else {
+                    lesson.title.len() + 2 + lesson.keys.len() + 1
+                };
+                if current_len < max_label {
+                    spans.push(Span::raw(" ".repeat(max_label - current_len)));
+                }
+                lines.push(Line::from(spans));
             }
             let on_off = |on: bool| if on { "on" } else { "off" };
             lines.push(Line::from(""));
@@ -703,10 +731,11 @@ fn draw_history(frame: &mut Frame, app: &App, area: Rect, tc: &ThemeColors) {
             let mins = (r.duration_secs as u64) / 60;
             let secs = (r.duration_secs as u64) % 60;
             let status = if r.completed { "" } else { "*" };
-            let lesson_label = crate::lessons::LESSONS
+            let lessons = crate::lessons::lessons_for_layout(app.layout);
+            let lesson_label = lessons
                 .iter()
                 .find(|l| l.id == r.id)
-                .map(|l| l.label)
+                .map(|l| l.title)
                 .unwrap_or(&r.id);
             let lesson_display = if r.id.is_empty() { "—" } else { lesson_label };
             let selected = i == scroll_pos;

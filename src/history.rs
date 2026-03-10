@@ -44,18 +44,17 @@ pub fn save_session(record: SessionRecord) {
     }
 }
 
-pub fn resume_lesson(lessons: &[crate::lessons::Lesson]) -> usize {
-    resume_lesson_from(&load_history(), lessons)
+pub fn resume_lesson(layout: crate::settings::KeyboardLayout) -> usize {
+    let lessons = crate::lessons::lessons_for_layout(layout);
+    resume_lesson_from(&load_history(), &lessons)
 }
 
-fn resume_lesson_from(history: &[SessionRecord], lessons: &[crate::lessons::Lesson]) -> usize {
+fn resume_lesson_from(history: &[SessionRecord], lessons: &[&crate::lessons::Lesson]) -> usize {
     for entry in history.iter().rev() {
         if entry.id.is_empty() {
             continue;
         }
-        let idx = lessons
-            .iter()
-            .position(|l| l.id == entry.id || l.label == entry.id);
+        let idx = lessons.iter().position(|l| l.id == entry.id);
         match idx {
             Some(i) if entry.completed => {
                 return (i + 1).min(lessons.len().saturating_sub(1));
@@ -81,6 +80,8 @@ mod tests {
 
     #[test]
     fn session_record_roundtrip() {
+        let lessons = qwerty_lessons();
+        let id = lessons[3].id;
         let record = SessionRecord {
             timestamp: "2026-03-08T12:00:00".into(),
             wpm: 45.0,
@@ -89,7 +90,7 @@ mod tests {
             total: 200,
             duration_secs: 120.0,
             completed: true,
-            id: "home_row".into(),
+            id: id.into(),
         };
         let json = serde_json::to_string(&record).unwrap();
         let deserialized: SessionRecord = serde_json::from_str(&json).unwrap();
@@ -99,7 +100,7 @@ mod tests {
         assert_eq!(deserialized.correct, 195);
         assert_eq!(deserialized.total, 200);
         assert!(deserialized.completed);
-        assert_eq!(deserialized.id, "home_row");
+        assert_eq!(deserialized.id, id);
     }
 
     #[test]
@@ -134,24 +135,6 @@ mod tests {
 
     // --- resume_lesson_from ---
 
-    const TEST_LESSONS: &[crate::lessons::Lesson] = &[
-        crate::lessons::Lesson {
-            id: "fjdk",
-            label: "f j d k",
-            text: "",
-        },
-        crate::lessons::Lesson {
-            id: "home_row",
-            label: "home row",
-            text: "",
-        },
-        crate::lessons::Lesson {
-            id: "ghfj",
-            label: "g h",
-            text: "",
-        },
-    ];
-
     fn record(id: &str, completed: bool) -> SessionRecord {
         SessionRecord {
             timestamp: String::new(),
@@ -165,53 +148,62 @@ mod tests {
         }
     }
 
+    fn qwerty_lessons() -> Vec<&'static crate::lessons::Lesson> {
+        crate::lessons::lessons_for_layout(crate::settings::KeyboardLayout::Qwerty)
+    }
+
     #[test]
     fn resume_empty_history_returns_zero() {
-        assert_eq!(resume_lesson_from(&[], TEST_LESSONS), 0);
+        assert_eq!(resume_lesson_from(&[], &qwerty_lessons()), 0);
     }
 
     #[test]
     fn resume_incomplete_lesson_returns_same() {
-        let history = vec![record("fjdk", false)];
-        assert_eq!(resume_lesson_from(&history, TEST_LESSONS), 0);
+        let lessons = qwerty_lessons();
+        let history = vec![record(lessons[0].id, false)];
+        assert_eq!(resume_lesson_from(&history, &lessons), 0);
     }
 
     #[test]
     fn resume_completed_lesson_returns_next() {
-        let history = vec![record("fjdk", true)];
-        assert_eq!(resume_lesson_from(&history, TEST_LESSONS), 1);
+        let lessons = qwerty_lessons();
+        let history = vec![record(lessons[0].id, true)];
+        assert_eq!(resume_lesson_from(&history, &lessons), 1);
     }
 
     #[test]
     fn resume_completed_last_lesson_stays_at_last() {
-        let history = vec![record("ghfj", true)];
-        assert_eq!(resume_lesson_from(&history, TEST_LESSONS), 2);
+        let lessons = qwerty_lessons();
+        let last = lessons.last().unwrap();
+        let history = vec![record(last.id, true)];
+        assert_eq!(resume_lesson_from(&history, &lessons), lessons.len() - 1);
     }
 
     #[test]
     fn resume_unknown_lesson_returns_zero() {
         let history = vec![record("unknown", false)];
-        assert_eq!(resume_lesson_from(&history, TEST_LESSONS), 0);
-    }
-
-    #[test]
-    fn resume_matches_by_label_for_old_history() {
-        let history = vec![record("home row", false)];
-        assert_eq!(resume_lesson_from(&history, TEST_LESSONS), 1);
+        assert_eq!(resume_lesson_from(&history, &qwerty_lessons()), 0);
     }
 
     #[test]
     fn resume_uses_last_matching_entry() {
-        let history = vec![record("fjdk", true), record("home_row", false)];
-        assert_eq!(resume_lesson_from(&history, TEST_LESSONS), 1);
+        let lessons = qwerty_lessons();
+        let history = vec![record(lessons[0].id, true), record(lessons[3].id, false)];
+        assert_eq!(resume_lesson_from(&history, &lessons), 3);
     }
 
     #[test]
     fn resume_skips_file_sessions_to_find_lesson() {
-        let history = vec![
-            record("home_row", true),
-            record("sample.txt", false), // file-based session, not a lesson
-        ];
-        assert_eq!(resume_lesson_from(&history, TEST_LESSONS), 2); // next after home_row
+        let lessons = qwerty_lessons();
+        let history = vec![record(lessons[3].id, true), record("sample.txt", false)];
+        assert_eq!(resume_lesson_from(&history, &lessons), 4);
+    }
+
+    #[test]
+    fn resume_cross_layout_shares_ids() {
+        let qwerty = qwerty_lessons();
+        let dvorak = crate::lessons::lessons_for_layout(crate::settings::KeyboardLayout::Dvorak);
+        let history = vec![record(qwerty[3].id, true)];
+        assert_eq!(resume_lesson_from(&history, &dvorak), 4);
     }
 }

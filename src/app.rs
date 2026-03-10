@@ -174,7 +174,7 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        let selected_lesson = crate::history::resume_lesson(crate::lessons::LESSONS);
+        let selected_lesson = crate::history::resume_lesson(KeyboardLayout::default());
         Self {
             document: None,
             file_path_buf: String::new(),
@@ -407,18 +407,18 @@ impl App {
     }
 
     fn handle_menu_key(&mut self, code: KeyCode) {
-        let lesson_count = crate::lessons::LESSONS.len();
+        let lessons = crate::lessons::lessons_for_layout(self.layout);
         match code {
             KeyCode::Up | KeyCode::Char('k') => {
                 self.selected_lesson = self.selected_lesson.saturating_sub(1);
             }
             KeyCode::Down | KeyCode::Char('j') => {
-                if self.selected_lesson + 1 < lesson_count {
+                if self.selected_lesson + 1 < lessons.len() {
                     self.selected_lesson += 1;
                 }
             }
             KeyCode::Enter => {
-                if let Some(lesson) = crate::lessons::LESSONS.get(self.selected_lesson) {
+                if let Some(lesson) = lessons.get(self.selected_lesson) {
                     match Document::from_text(lesson.text) {
                         Ok(doc) => {
                             self.document = Some(doc);
@@ -481,7 +481,7 @@ impl App {
                     self.end_time = Some(Instant::now());
                     self.save_history(true);
                     self.selected_lesson = (self.selected_lesson + 1)
-                        .min(crate::lessons::LESSONS.len().saturating_sub(1));
+                        .min(crate::lessons::lesson_count().saturating_sub(1));
                 }
             }
         } else {
@@ -907,7 +907,7 @@ mod tests {
     #[test]
     fn menu_down_at_last_stays_at_last() {
         let mut app = App::new();
-        let last = crate::lessons::LESSONS.len() - 1;
+        let last = crate::lessons::lesson_count() - 1;
         app.selected_lesson = last;
         app.handle_event(InputEvent::Press(key_event(KeyCode::Down)));
         assert_eq!(app.selected_lesson, last);
