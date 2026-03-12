@@ -19,11 +19,11 @@
     </pattern>
     <!-- Dot pattern - bright for letter -->
     <pattern id="brightdots" width="14" height="14" patternUnits="userSpaceOnUse">
-      <circle cx="7" cy="7" r="4.5" fill="#44ff44" opacity="0.9"/>
+      <circle cx="7" cy="7" r="4.5" fill="#55ff55" opacity="1"/>
     </pattern>
     <!-- Dot pattern - glow around letter -->
     <pattern id="glowdots" width="14" height="14" patternUnits="userSpaceOnUse">
-      <circle cx="7" cy="7" r="4.5" fill="#33ff33" opacity="0.9"/>
+      <circle cx="7" cy="7" r="4.5" fill="#44ff44" opacity="0.95"/>
     </pattern>
     <!-- Glow behind letter -->
     <radialGradient id="glow" cx="50%" cy="50%" r="45%">
@@ -38,12 +38,6 @@
       <stop offset="50%" stop-color="#ffffff" stop-opacity="0.09"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
-    <!-- Snap partial edge dots to fully on -->
-    <filter id="snap">
-      <feComponentTransfer>
-        <feFuncA type="discrete" tableValues="0 1 1 1 1 1 1 1 1 1"/>
-      </feComponentTransfer>
-    </filter>
     <!-- Blur for glow around shapes -->
     <filter id="cblur" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="50"/>
@@ -86,9 +80,9 @@
   <!-- Cursor glow halo -->
   <rect x="396" y="68" width="22" height="376" rx="4" fill="#33ff33" opacity="0.35" filter="url(#ledblur)"/>
   <!-- Bright dots forming the C -->
-  <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#brightdots)" mask="url(#cmask-sharp)" filter="url(#snap)"/>
+  <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#brightdots)" mask="url(#cmask-sharp)"/>
   <!-- Bright dots forming the cursor -->
-  <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#brightdots)" mask="url(#cursormask-sharp)" filter="url(#snap)"/>
+  <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#brightdots)" mask="url(#cursormask-sharp)"/>
   <!-- Gloss -->
   <path d="M28,100 A72,72 0 0,1 100,28 L412,28 A72,72 0 0,1 484,100 L484,280 Q256,355 28,280 Z" fill="url(#gloss)"/>
 </svg>
