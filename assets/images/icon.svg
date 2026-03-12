@@ -16,8 +16,10 @@
       <circle cx="6" cy="6" r="2.4" fill="#ffffff" opacity="0.12"/>
     </pattern>
     <!-- Glow behind letter -->
-    <radialGradient id="glow" cx="50%" cy="50%" r="40%">
-      <stop offset="0%" stop-color="#33ff33" stop-opacity="0.3"/>
+    <radialGradient id="glow" cx="50%" cy="50%" r="35%">
+      <stop offset="0%" stop-color="#33ff33" stop-opacity="0.22"/>
+      <stop offset="40%" stop-color="#33ff33" stop-opacity="0.12"/>
+      <stop offset="70%" stop-color="#33ff33" stop-opacity="0.04"/>
       <stop offset="100%" stop-color="#33ff33" stop-opacity="0"/>
     </radialGradient>
     <!-- Glossy highlight -->
@@ -37,7 +39,7 @@
   <!-- Dot grid -->
   <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#dots)"/>
   <!-- Glow -->
-  <circle cx="256" cy="256" r="180" fill="url(#glow)"/>
+  <circle cx="256" cy="256" r="160" fill="url(#glow)"/>
   <!-- Gloss -->
   <rect x="28" y="28" width="456" height="228" rx="72" fill="url(#gloss)"/>
 
