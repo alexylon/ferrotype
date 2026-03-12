@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Outer bezel gradient -->
+    <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#33ff33"/>
+      <stop offset="50%" stop-color="#20bb20"/>
+      <stop offset="100%" stop-color="#148a14"/>
+    </linearGradient>
+    <!-- Inner screen gradient -->
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#001a00"/>
+      <stop offset="100%" stop-color="#001a00"/>
+    </linearGradient>
+    <!-- Dot pattern -->
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="6" r="2.4" fill="#ffffff" opacity="0.12"/>
+    </pattern>
+    <!-- Glow behind letter -->
+    <radialGradient id="glow" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#33ff33" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#33ff33" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Glossy highlight -->
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Bezel -->
+  <rect width="512" height="512" rx="100" fill="url(#bezel)"/>
+  <!-- Dark inner border -->
+  <rect x="18" y="18" width="476" height="476" rx="82" fill="#111"/>
+  <!-- Screen -->
+  <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#screen)"/>
+  <!-- Dot grid -->
+  <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#dots)"/>
+  <!-- Glow -->
+  <circle cx="256" cy="256" r="180" fill="url(#glow)"/>
+  <!-- Gloss -->
+  <rect x="28" y="28" width="456" height="228" rx="72" fill="url(#gloss)"/>
+
+  <!-- Letter c -->
+  <path transform="translate(87.2 410) scale(0.56 -0.56)" fill="#33ff33" stroke="#33ff33" opacity="0.7" stroke-width="20" stroke-linejoin="round" d="M304 -10Q238 -10 188.5 15.0Q139 40 112.0 87.5Q85 135 85 200V350Q85 416 112.0 463.0Q139 510 188.5 535.0Q238 560 304 560Q399 560 457.0 509.0Q515 458 518 370H428Q425 423 392.5 451.5Q360 480 304 480Q245 480 210.0 446.5Q175 413 175 351V200Q175 138 210.0 104.0Q245 70 304 70Q360 70 392.5 99.0Q425 128 428 180H518Q515 92 457.0 41.0Q399 -10 304 -10Z"/>
+
+  <!-- Power LED -->
+  <circle cx="420" cy="420" r="12" fill="#33ff33" opacity="0.7"/>
+  <circle cx="420" cy="420" r="20" fill="#33ff33" opacity="0.3"/>
+</svg>
