@@ -14,22 +14,22 @@
       <stop offset="100%" stop-color="#000f00"/>
     </linearGradient>
     <!-- Dot pattern - dim background -->
-    <pattern id="dots" width="9" height="9" patternUnits="userSpaceOnUse">
-      <circle cx="4.5" cy="4.5" r="2.8" fill="#ffffff" opacity="0.12"/>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="7" cy="7" r="4.5" fill="#ffffff" opacity="0.12"/>
     </pattern>
     <!-- Dot pattern - bright for letter -->
-    <pattern id="brightdots" width="9" height="9" patternUnits="userSpaceOnUse">
-      <circle cx="4.5" cy="4.5" r="2.8" fill="#44ff44" opacity="0.9"/>
+    <pattern id="brightdots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="7" cy="7" r="4.5" fill="#44ff44" opacity="0.9"/>
     </pattern>
     <!-- Dot pattern - glow around letter -->
-    <pattern id="glowdots" width="9" height="9" patternUnits="userSpaceOnUse">
-      <circle cx="4.5" cy="4.5" r="2.8" fill="#33ff33" opacity="0.75"/>
+    <pattern id="glowdots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="7" cy="7" r="4.5" fill="#33ff33" opacity="0.9"/>
     </pattern>
     <!-- Glow behind letter -->
     <radialGradient id="glow" cx="50%" cy="50%" r="45%">
-      <stop offset="0%" stop-color="#33ff33" stop-opacity="0.25"/>
-      <stop offset="30%" stop-color="#33ff33" stop-opacity="0.15"/>
-      <stop offset="55%" stop-color="#33ff33" stop-opacity="0.06"/>
+      <stop offset="0%" stop-color="#33ff33" stop-opacity="0.2"/>
+      <stop offset="30%" stop-color="#33ff33" stop-opacity="0.12"/>
+      <stop offset="55%" stop-color="#33ff33" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="#33ff33" stop-opacity="0"/>
     </radialGradient>
     <!-- Glossy highlight -->
@@ -46,10 +46,10 @@
     </filter>
     <!-- Blur for glow around shapes -->
     <filter id="cblur" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="42"/>
+      <feGaussianBlur stdDeviation="50"/>
     </filter>
     <filter id="ledblur" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="18"/>
+      <feGaussianBlur stdDeviation="24"/>
     </filter>
     <!-- Mask: sharp C shape (expanded by ~half dot to include edge dots) -->
     <mask id="cmask-sharp">
@@ -84,7 +84,7 @@
   <!-- Glow -->
   <circle cx="256" cy="256" r="150" fill="url(#glow)"/>
   <!-- Cursor glow halo -->
-  <rect x="396" y="68" width="22" height="376" rx="4" fill="#33ff33" opacity="0.25" filter="url(#ledblur)"/>
+  <rect x="396" y="68" width="22" height="376" rx="4" fill="#33ff33" opacity="0.35" filter="url(#ledblur)"/>
   <!-- Bright dots forming the C -->
   <rect x="28" y="28" width="456" height="456" rx="72" fill="url(#brightdots)" mask="url(#cmask-sharp)" filter="url(#snap)"/>
   <!-- Bright dots forming the cursor -->
