@@ -18,6 +18,7 @@ const MAX_WIDTH: u16 = 120;
 #[derive(Clone, Copy)]
 pub struct ThemeColors {
     pub dim_border: Color,
+    pub title: Color,
     pub accent: Color,
     pub dim_text: Color,
     pub correct: Color,
@@ -36,6 +37,7 @@ impl ThemeColors {
         match theme {
             Theme::Dark => Self {
                 dim_border: Color::DarkGray,
+                title: Color::Rgb(0x22, 0xcc, 0x22),
                 accent: Color::Cyan,
                 dim_text: Color::DarkGray,
                 correct: Color::Rgb(100, 180, 255),
@@ -50,6 +52,7 @@ impl ThemeColors {
             },
             Theme::Light => Self {
                 dim_border: Color::Rgb(180, 180, 180),
+                title: Color::Rgb(0x00, 0x99, 0x00),
                 accent: Color::Rgb(0, 120, 180),
                 dim_text: Color::Rgb(140, 140, 140),
                 correct: Color::Rgb(30, 120, 200),
@@ -338,7 +341,7 @@ fn draw_header(
         left,
     );
 
-    let mut center_spans = vec![Span::styled("clavirio", Style::new().fg(tc.accent).bold())];
+    let mut center_spans = vec![Span::styled("clavirio", Style::new().fg(tc.title).bold())];
     if let Some(doc) = &app.document {
         let (cur, total) = doc.line_progress();
         center_spans.push(Span::styled(
