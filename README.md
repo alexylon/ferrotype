@@ -108,3 +108,5 @@ show_hints = true
 show_fingers = true
 theme = "dark"          # dark, light
 ```
+
+[![forthebadge](https://forthebadge.com/images/badges/made-with-rust.svg)](https://forthebadge.com)
